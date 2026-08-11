@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}溯源创建 - 滩智溯{% endblock %}
+{% block page_title %}生成溯源码{% endblock %}
+{% block page_desc %}全链路上链，数据不可篡改{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-500 text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 mb-2">溯源码生成成功！</h3>
+                <div id="success-details" class="text-sm text-slate-600 space-y-1 mb-4"></div>
+                <div class="flex gap-2">
+                    <button onclick="closeSuccessModal()" class="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition">
+                        继续生成
+                    </button>
+                    <a href="{{ url_for('traceability.trace_list') }}" class="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg text-center hover:bg-purple-600 transition">
+                        查看记录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-6">
+            <i class="fas fa-qrcode text-purple-500 mr-2"></i>生成区块链溯源码
+        </h3>
+        
+        <form id="trace-form" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">产品名称 *</label>
+                    <input type="text" name="product_name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500" placeholder="如：丹东野生缢蛏">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">产品品类 *</label>
+                    <select name="product_category" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                        <option value="">请选择</option>
+                        <option value="缢蛏">缢蛏</option>
+                        <option value="文蛤">文蛤</option>
+                        <option value="蚬子">蚬子</option>
+                        <option value="扇贝">扇贝</option>
+                        <option value="贻贝">贻贝</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">苗种来源</label>
+                    <input type="text" name="seed_source" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500" placeholder="如：丹东苗种场">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">投苗日期</label>
+                    <input type="date" name="seed_date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">捕捞日期</label>
+                    <input type="date" name="harvest_date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">质检结果</label>
+                    <select name="quality_check" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                        <option value="合格">合格</option>
+                        <option value="优良">优良</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="pt-4 border-t">
+                <button type="submit" id="submit-btn" class="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition shadow-lg">
+                    <i class="fas fa-qrcode mr-2"></i>生成溯源码并上链
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-blue-50 rounded-xl p-6 mt-4">
+        <h4 class="font-medium text-blue-800 mb-2"><i class="fas fa-shield-alt mr-2"></i>区块链溯源保障</h4>
+        <ul class="text-sm text-slate-600 space-y-1">
+            <li>• 每一条溯源记录都会生成唯一的区块链哈希值</li>
+            <li>• 一旦上链，数据不可篡改，确保真实性</li>
+            <li>• 消费者扫码可查看完整养殖流程</li>
+            <li>• 支持批量生成，批量导出，方便大规模使用</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const createUrl = "{{ url_for('traceability.create_trace') }}";
+    
+    document.getElementById('trace-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+        
+        fetch(createUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccessModal(data);
+                this.reset();
+            } else {
+                alert('生成失败：' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('网络错误，请重试');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i>生成溯源码并上链';
+        });
+    });
+
+    function showSuccessModal(data) {
+        const modal = document.getElementById('success-modal');
+        const details = document.getElementById('success-details');
+        details.innerHTML = `
+            <div>批次码: <code class="bg-slate-100 px-2 py-0.5 rounded text-slate-800">${data.batch_code}</code></div>
+            <div>区块链哈希: <code class="text-xs text-slate-500">${data.blockchain_hash.substring(0, 20)}...</code></div>
+        `;
+        modal.classList.remove('hidden');
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('success-modal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

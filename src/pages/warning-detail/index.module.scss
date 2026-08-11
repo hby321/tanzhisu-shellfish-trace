@@ -1,0 +1,28 @@
+@use '@/styles/variables.scss' as *;
+
+.detailPage { min-height: 100%; background: $color-bg-page; padding-bottom: $spacing-xl; }
+
+.header { padding: $spacing-md $page-padding; }
+.levelBadge { display: inline-flex; align-items: center; gap: 8rpx; font-size: $font-size-sm; padding: 8rpx 24rpx; border-radius: $radius-round; }
+.badgeRed { background: rgba(245,63,63,0.1); color: #f53f3f; }
+.badgeOrange { background: rgba(255,125,0,0.1); color: #ff7d00; }
+.badgeBlue { background: rgba(22,93,255,0.1); color: #165dff; }
+.detailTitle { font-size: $font-size-xl; font-weight: $font-weight-semibold; color: $color-text-primary; margin-top: $spacing-sm; line-height: $line-height-tight; }
+.detailMeta { font-size: $font-size-sm; color: $color-text-tertiary; margin-top: $spacing-xs; }
+
+.section { padding: 0 $page-padding; margin-bottom: $spacing-lg; }
+.card { background: $color-bg-card; border-radius: $radius-lg; padding: $spacing-md; box-shadow: $shadow-card; }
+.cardTitle { font-size: $font-size-md; font-weight: $font-weight-medium; color: $color-text-primary; margin-bottom: $spacing-sm; }
+.descText { font-size: $font-size-sm; color: $color-text-secondary; line-height: $line-height-normal; }
+
+.indicatorRow { display: flex; align-items: center; justify-content: space-between; padding: $spacing-xs 0; border-bottom: 1rpx solid $color-divider; &:last-child { border-bottom: none; } }
+.indicatorName { font-size: $font-size-sm; color: $color-text-secondary; }
+.indicatorVal { font-size: $font-size-md; font-weight: $font-weight-medium; color: $color-error; }
+
+.solutionBox { background: rgba(8,102,196,0.04); border-radius: $radius-md; padding: $spacing-md; }
+.solutionTitle { font-size: $font-size-sm; font-weight: $font-weight-medium; color: $color-primary; margin-bottom: $spacing-xs; }
+.solutionItem { font-size: $font-size-sm; color: $color-text-secondary; line-height: $line-height-loose; display: flex; gap: 8rpx; }
+.solutionNum { color: $color-primary; font-weight: $font-weight-medium; flex-shrink: 0; }
+
+.notifyList { display: flex; gap: $spacing-sm; flex-wrap: wrap; }
+.notifyItem { font-size: $font-size-xs; background: $color-bg-hover; padding: 8rpx 24rpx; border-radius: $radius-round; color: $color-text-secondary; }

@@ -1,0 +1,24 @@
+@use '@/styles/variables.scss' as *;
+
+.detailPage { min-height: 100%; background: $color-bg-page; padding-bottom: $spacing-xl; }
+
+.header { background: $color-bg-card; padding: $spacing-lg $page-padding; }
+.category { display: inline-block; font-size: $font-size-xs; background: rgba(8,102,196,0.08); color: $color-primary; padding: 4rpx 16rpx; border-radius: $radius-sm; }
+.title { font-size: $font-size-xxl; font-weight: $font-weight-semibold; color: $color-text-primary; margin-top: $spacing-xs; line-height: $line-height-tight; }
+.summary { font-size: $font-size-sm; color: $color-text-tertiary; margin-top: $spacing-xs; line-height: $line-height-normal; }
+.meta { display: flex; gap: $spacing-md; margin-top: $spacing-sm; font-size: $font-size-xs; color: $color-text-tertiary; }
+.region { background: rgba(0,184,169,0.08); color: $color-ocean; padding: 2rpx 12rpx; border-radius: $radius-xs; }
+
+.videoBanner { margin: $spacing-sm $page-padding; background: linear-gradient(135deg, #f53f3f 0%, #ff7875 100%); border-radius: $radius-md; padding: $spacing-sm $spacing-md; display: flex; align-items: center; gap: $spacing-sm; }
+.videoIcon { font-size: 36rpx; }
+.videoText { color: #fff; font-size: $font-size-sm; }
+
+.section { padding: 0 $page-padding; margin-bottom: $spacing-lg; }
+.card { background: $color-bg-card; border-radius: $radius-lg; padding: $spacing-md; box-shadow: $shadow-card; }
+.contentText { font-size: $font-size-md; color: $color-text-primary; line-height: $line-height-loose; }
+
+.expertBar { margin: 0 $page-padding; background: linear-gradient(135deg, #722ed1 0%, #9254de 100%); border-radius: $radius-lg; padding: $spacing-md; display: flex; align-items: center; gap: $spacing-sm; box-shadow: 0 4rpx 16rpx rgba(114,46,209,0.3); transition: all $transition-base; &:active { opacity: 0.9; } }
+.expertIcon { font-size: 40rpx; }
+.expertText { flex: 1; color: #fff; }
+.expertTitle { font-size: $font-size-md; font-weight: $font-weight-medium; }
+.expertDesc { font-size: $font-size-xs; opacity: 0.8; margin-top: 4rpx; }

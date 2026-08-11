@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}企业仪表板 - 滩智溯{% endblock %}
+{% block page_title %}企业采购管理总览{% endblock %}
+{% block page_desc %}溯源核验，批量采购，品牌管理{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">溯源总数</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.trace_total }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">订单总数</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.order_count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">合作产品</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.product_count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">近30天采购</p>
+        <p class="text-3xl font-bold mt-1">¥{{ "{:,.2f}".format(stats.monthly_total) }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">产品分布</h3>
+        <div id="product-chart" style="height: 250px;"></div>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">最新订单</h3>
+        <div class="space-y-3">
+            {% for order in stats.recent_orders[:5] %}
+            <div class="flex items-center justify-between p-3 border border-slate-100 rounded-lg">
+                <div>
+                    <p class="text-sm font-medium text-slate-800">订单 #{{ order.id }}</p>
+                    <p class="text-xs text-slate-500">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+                <span class="text-sm font-medium text-blue-600">¥{{ "{:,.2f}".format(order.agreed_price * order.quantity) }}</span>
+            </div>
+            {% endfor %}
+            
+            {% if not stats.recent_orders %}
+            <p class="text-center text-slate-400 py-4 text-sm">暂无订单</p>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('enterprise.my_contracts') }}" class="block text-center py-2 mt-4 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100">查看全部订单</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 产品分布饼图
+    const productChart = echarts.init(document.getElementById('product-chart'));
+    const productData = {{ stats.product_stats | map(attribute=0) | list | tojson }};
+    const productCounts = {{ stats.product_stats | map(attribute=1) | list | tojson }};
+    
+    // 简化产品名称
+    const simplifiedNames = productData.map(name => {
+        if (name.length > 8) return name.substring(0, 8) + '...';
+        return name;
+    });
+    
+    productChart.setOption({
+        tooltip: { 
+            trigger: 'item',
+            formatter: '{b}: {c} 条 ({d}%)'
+        },
+        legend: { 
+            orient: 'vertical',
+            right: '5%',
+            top: 'middle',
+            left: 'auto',
+            itemWidth: 12,
+            itemHeight: 8,
+            textStyle: {
+                fontSize: 10
+            },
+            type: 'scroll'
+        },
+        series: [{
+            type: 'pie',
+            radius: ['45%', '70%'],
+            center: ['35%', '50%'],
+            avoidLabelOverlap: true,
+            label: {
+                show: false
+            },
+            data: productData.map((name, i) => ({ 
+                name: simplifiedNames[i], 
+                value: productCounts[i],
+                fullName: name
+            }))
+        }]
+    });
+</script>
+{% endblock %}

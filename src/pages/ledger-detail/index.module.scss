@@ -1,0 +1,26 @@
+@use '@/styles/variables.scss' as *;
+
+.detailPage { min-height: 100%; background: $color-bg-page; padding-bottom: 120rpx; }
+
+.header { background: $color-bg-card; padding: $spacing-lg $page-padding; }
+.typeRow { display: flex; align-items: center; gap: $spacing-sm; margin-bottom: $spacing-xs; }
+.typeIcon { width: 64rpx; height: 64rpx; border-radius: $radius-md; display: flex; align-items: center; justify-content: center; font-size: 32rpx; }
+.typeName { font-size: $font-size-lg; font-weight: $font-weight-medium; color: $color-text-primary; }
+.contentTitle { font-size: $font-size-md; color: $color-text-secondary; line-height: $line-height-normal; }
+.statusTag { font-size: $font-size-xs; padding: 4rpx 16rpx; border-radius: $radius-round; margin-top: $spacing-xs; display: inline-block; }
+.statusDone { background: rgba(0,180,42,0.1); color: $color-success; }
+.statusPending { background: rgba(255,125,0,0.1); color: $color-warning; }
+
+.section { padding: 0 $page-padding; margin-bottom: $spacing-lg; }
+.sectionTitle { font-size: $font-size-lg; font-weight: $font-weight-semibold; color: $color-text-primary; margin-bottom: $spacing-sm; }
+.card { background: $color-bg-card; border-radius: $radius-lg; padding: $spacing-md; box-shadow: $shadow-card; }
+.detailRow { display: flex; align-items: flex-start; padding: $spacing-xs 0; border-bottom: 1rpx solid $color-divider; &:last-child { border-bottom: none; } }
+.detailLabel { width: 180rpx; font-size: $font-size-sm; color: $color-text-tertiary; flex-shrink: 0; }
+.detailValue { flex: 1; font-size: $font-size-sm; color: $color-text-primary; }
+
+.metaRow { display: flex; gap: $spacing-md; margin-top: $spacing-sm; font-size: $font-size-sm; color: $color-text-tertiary; }
+
+.bottomBtn { position: fixed; bottom: 0; left: 0; right: 0; padding: $spacing-sm $page-padding; background: $color-bg-card; box-shadow: $shadow-float; display: flex; gap: $spacing-sm; }
+.btn { @include button-reset; flex: 1; height: $button-height-lg; border-radius: $radius-button; font-size: $font-size-md; font-weight: $font-weight-medium; transition: all $transition-base; &:active { opacity: 0.9; } }
+.btnPdf { background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%); color: #fff; }
+.btnEdit { background: $color-bg-hover; color: $color-text-secondary; }

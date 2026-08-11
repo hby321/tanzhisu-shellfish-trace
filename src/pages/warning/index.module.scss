@@ -1,0 +1,230 @@
+@use '@/styles/variables.scss' as *;
+
+.warningPage {
+  min-height: 100%;
+  background: $color-bg-page;
+  padding-bottom: $spacing-xl;
+}
+
+// 预警统计
+.statsRow {
+  display: flex;
+  padding: $spacing-md $page-padding;
+  gap: $spacing-sm;
+}
+
+.statBox {
+  flex: 1;
+  border-radius: $radius-md;
+  padding: $spacing-sm 0;
+  text-align: center;
+  color: #fff;
+}
+
+.statBlue { background: linear-gradient(135deg, #165dff, #4080ff); }
+.statOrange { background: linear-gradient(135deg, #ff7d00, #ffa940); }
+.statRed { background: linear-gradient(135deg, #f53f3f, #ff7875); }
+
+.statNum {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+}
+
+// 通知渠道
+.notifyBar {
+  margin: 0 $page-padding $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  box-shadow: $shadow-card;
+}
+
+.notifyIcon { font-size: 36rpx; }
+.notifyText { flex: 1; font-size: $font-size-sm; color: $color-text-secondary; }
+.notifyBadge {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  background: rgba(8, 102, 196, 0.1);
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+// 活跃预警列表
+.section {
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.alertCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-sm;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active { opacity: 0.95; transform: scale(0.99); }
+}
+
+.alertHeader {
+  padding: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.alertLevelIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.levelBlueBg { background: rgba(22, 93, 255, 0.1); }
+.levelOrangeBg { background: rgba(255, 125, 0, 0.1); }
+.levelRedBg { background: rgba(245, 63, 63, 0.1); }
+
+.alertInfo { flex: 1; min-width: 0; }
+
+.alertTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.alertMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.alertLevelTag {
+  font-size: $font-size-xs;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  white-space: nowrap;
+}
+
+.tagBlue { background: rgba(22, 93, 255, 0.1); color: $color-alert-blue; }
+.tagOrange { background: rgba(255, 125, 0, 0.1); color: $color-alert-orange; }
+.tagRed { background: rgba(245, 63, 63, 0.1); color: $color-alert-red; }
+
+.alertBody {
+  padding: 0 $spacing-md $spacing-md;
+}
+
+.alertDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-sm;
+}
+
+.alertIndicators {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.indicatorTag {
+  font-size: $font-size-xs;
+  background: $color-bg-hover;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-sm;
+  color: $color-text-secondary;
+}
+
+// 处置方案
+.solutionBox {
+  background: rgba(8, 102, 196, 0.04);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.solutionTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.solutionItem {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+  display: flex;
+  gap: 8rpx;
+}
+
+.solutionNum {
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+}
+
+// 水质监测卡片
+.monitorCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+}
+
+.monitorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.monitorName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.monitorGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: $spacing-xs;
+}
+
+.monitorItem {
+  text-align: center;
+  background: $color-bg-hover;
+  border-radius: $radius-sm;
+  padding: $spacing-xs 0;
+}
+
+.monitorValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.monitorLabel {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}

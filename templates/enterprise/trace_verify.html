@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}溯源核验 - 滩智溯{% endblock %}
+{% block page_title %}批量溯源核验{% endblock %}
+{% block page_desc %}企业采购溯源信息快速核验{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 批量核验 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">批量核验溯源码</h3>
+        <p class="text-sm text-slate-500 mb-4">粘贴或输入溯源批次码，每行一个</p>
+        <div class="mb-4">
+            <textarea id="batch-codes" rows="8" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 font-mono text-sm"
+                      placeholder="BD20240101001&#10;PJ20240102001&#10;..."></textarea>
+        </div>
+        <button onclick="batchVerify()" class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition">
+            <i class="fas fa-search mr-2"></i>批量核验
+        </button>
+    </div>
+    
+    <!-- 核验结果 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">核验结果</h3>
+        <div id="verify-result" class="text-center py-12 text-slate-400">
+            <i class="fas fa-clipboard-check text-4xl mb-4"></i>
+            <p>等待核验...</p>
+        </div>
+    </div>
+</div>
+
+<!-- 溯源查询 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">单个溯源查询</h3>
+    <div class="flex gap-2">
+        <input type="text" id="single-code" placeholder="输入或扫描溯源批次码" 
+               class="flex-1 px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+        <button onclick="singleVerify()" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+            <i class="fas fa-qrcode mr-2"></i>查询
+        </button>
+    </div>
+    <div id="single-result" class="mt-4 hidden"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function batchVerify() {
+        const codes = document.getElementById('batch-codes').value.trim();
+        if (!codes) {
+            alert('请输入溯源码');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('batch_codes', codes);
+        
+        fetch('/trace/batch-verify', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || '核验失败');
+            }
+            const result = document.getElementById('verify-result');
+            result.classList.remove('text-center', 'py-12', 'text-slate-400');
+            
+            const validCount = data.results.filter(r => r.valid).length;
+            const invalidCount = data.results.filter(r => !r.valid).length;
+            
+            let html = `
+                <div class="mb-4 p-4 rounded-lg bg-blue-50">
+                    <p class="text-sm text-slate-600">共核验 <span class="font-bold text-blue-600">${data.results.length}</span> 条，
+                        有效 <span class="font-bold text-green-600">${validCount}</span> 条，
+                        无效 <span class="font-bold text-red-600">${invalidCount}</span> 条</p>
+                </div>
+                <div class="space-y-2">
+            `;
+            
+            data.results.forEach(r => {
+                if (r.valid) {
+                    html += `
+                        <div class="p-3 rounded-lg bg-green-50 border border-green-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="font-medium text-green-700">${r.code}</span>
+                                    <span class="ml-2 text-sm text-slate-500">${r.product}</span>
+                                </div>
+                                <div>
+                                    <span class="px-2 py-0.5 bg-green-200 text-green-800 text-xs rounded">${r.status}</span>
+                                    <span class="ml-2 text-sm text-slate-500">农户：${r.farmer}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-red-700">${r.code}</span>
+                                <span class="text-sm text-red-600">${r.message}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            result.innerHTML = html;
+        })
+        .catch(err => {
+            const result = document.getElementById('verify-result');
+            result.classList.remove('text-center', 'py-12', 'text-slate-400');
+            result.innerHTML = `
+                <div class="p-4 rounded-lg bg-red-50 border border-red-200">
+                    <p class="text-red-700">✗ ${err.message}</p>
+                </div>
+            `;
+        });
+    }
+    
+    function singleVerify() {
+        const code = document.getElementById('single-code').value.trim();
+        if (!code) {
+            alert('请输入溯源码');
+            return;
+        }
+        
+        fetch(`/api/trace/${code}`)
+            .then(r => r.json())
+            .then(data => {
+                const result = document.getElementById('single-result');
+                result.classList.remove('hidden');
+                
+                if (data.success) {
+                    const d = data.data;
+                    result.innerHTML = `
+                        <div class="p-4 rounded-lg bg-green-50 border border-green-200">
+                            <h4 class="font-medium text-green-700 mb-3">✓ 溯源信息验证通过</h4>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <p><span class="text-slate-500">产品：</span>${d.product_name}</p>
+                                <p><span class="text-slate-500">品类：</span>${d.product_category}</p>
+                                <p><span class="text-slate-500">农户：</span>${d.farmer}</p>
+                                <p><span class="text-slate-500">产地：</span>${d.farmer_area}</p>
+                                <p><span class="text-slate-500">投苗：</span>${d.seed_date || '-'}</p>
+                                <p><span class="text-slate-500">捕捞：</span>${d.harvest_date || '-'}</p>
+                                <p><span class="text-slate-500">质检：</span>${d.quality_check}</p>
+                                <p><span class="text-slate-500">状态：</span>${d.status}</p>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-green-200">
+                                <p class="text-xs text-slate-500">区块链哈希：<code class="font-mono">${d.blockchain_hash}</code></p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="p-4 rounded-lg bg-red-50 border border-red-200">
+                            <p class="text-red-700">✗ ${data.message}</p>
+                        </div>
+                    `;
+                }
+            });
+    }
+</script>
+{% endblock %}

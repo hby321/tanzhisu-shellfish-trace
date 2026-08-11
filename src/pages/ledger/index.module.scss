@@ -1,0 +1,192 @@
+@use '@/styles/variables.scss' as *;
+
+.ledgerPage {
+  min-height: 100%;
+  background: $color-bg-page;
+  padding-bottom: 120rpx;
+}
+
+// 快捷录入
+.quickSection {
+  padding: $spacing-md $page-padding;
+}
+
+.quickTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: $spacing-xs;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-sm;
+  box-shadow: $shadow-card;
+}
+
+.quickBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  transition: all $transition-base;
+
+  &:active { opacity: 0.7; transform: scale(0.96); }
+}
+
+.quickBtnIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+}
+
+.quickBtnLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+// PDF生成按钮
+.pdfBar {
+  margin: 0 $page-padding $spacing-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  box-shadow: 0 4rpx 16rpx rgba(8, 102, 196, 0.3);
+  transition: all $transition-base;
+
+  &:active { opacity: 0.9; transform: scale(0.99); }
+}
+
+.pdfIcon { font-size: 48rpx; }
+.pdfText { flex: 1; }
+.pdfTitle { color: #fff; font-size: $font-size-md; font-weight: $font-weight-medium; }
+.pdfDesc { color: rgba(255,255,255,0.8); font-size: $font-size-xs; margin-top: 4rpx; }
+.pdfArrow { color: #fff; font-size: $font-size-md; }
+
+// 筛选标签
+.filterTabs {
+  display: flex;
+  padding: 0 $page-padding $spacing-sm;
+  gap: $spacing-xs;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.filterTab {
+  font-size: $font-size-sm;
+  padding: 8rpx 24rpx;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  display: inline-block;
+  transition: all $transition-base;
+}
+
+.filterTabActive {
+  background: $color-primary;
+  color: #fff;
+}
+
+// 记录列表
+.recordList {
+  padding: 0 $page-padding;
+}
+
+.recordCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active { opacity: 0.95; transform: scale(0.99); }
+}
+
+.recordHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
+}
+
+.recordType {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.recordTypeIcon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+}
+
+.recordTypeName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.recordStatus {
+  font-size: $font-size-xs;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+}
+
+.statusDone { background: rgba(0, 180, 42, 0.1); color: $color-success; }
+.statusPending { background: rgba(255, 125, 0, 0.1); color: $color-warning; }
+
+.recordContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.recordMeta {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+// 底部按钮
+.bottomBtn {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-sm $page-padding;
+  background: $color-bg-card;
+  box-shadow: $shadow-float;
+  z-index: 100;
+}
+
+.addBtn {
+  @include button-reset;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: #fff;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active { opacity: 0.9; transform: scale(0.99); }
+}

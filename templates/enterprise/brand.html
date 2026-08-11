@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}品牌管理 - 滩智溯{% endblock %}
+{% block page_title %}品牌溯源管理{% endblock %}
+{% block page_desc %}区域品牌数字化，打造地理标志产品{% endblock %}
+
+{% block content %}
+<!-- 品牌统计 -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">品牌溯源产品</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|length }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">完成溯源</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|selectattr('status', 'equalto', 'completed')|list|length }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">产品品类数</p>
+        <p class="text-3xl font-bold mt-1">{{ product_stats|length }}</p>
+    </div>
+</div>
+
+<!-- 产品统计 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">品牌产品分布</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for product, data in product_stats.items() %}
+        <div class="text-center p-4 rounded-lg bg-blue-50 border border-blue-200">
+            <h4 class="font-medium text-slate-800">{{ product }}</h4>
+            <p class="text-2xl font-bold text-blue-600 mt-2">{{ data.count }}</p>
+            <p class="text-sm text-slate-500">件溯源</p>
+        </div>
+        {% endfor %}
+        
+        {% if not product_stats %}
+        <div class="col-span-full text-center py-4 text-slate-400">暂无品牌产品</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 溯源详情 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">已完成溯源详情</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-4 py-3">批次码</th>
+                    <th class="px-4 py-3">产品</th>
+                    <th class="px-4 py-3">农户</th>
+                    <th class="px-4 py-3">加工信息</th>
+                    <th class="px-4 py-3">完成时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trace in traces[:20] %}
+                <tr class="border-b">
+                    <td class="px-4 py-3"><code class="text-xs bg-slate-100 px-2 py-1 rounded">{{ trace.batch_code }}</code></td>
+                    <td class="px-4 py-3 text-slate-800">{{ trace.product_name }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ trace.farmer.real_name if trace.farmer else '-' }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ trace.processing_info or '-' }}</td>
+                    <td class="px-4 py-3 text-sm text-slate-500">{{ trace.updated_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 品牌建设建议 -->
+<div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mt-6">
+    <h3 class="font-medium text-slate-800 mb-3"><i class="fas fa-trophy text-amber-500 mr-2"></i>品牌建设建议</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-700">
+        <div>
+            <p class="font-medium mb-1">✓ 地理标志产品</p>
+            <p class="text-slate-600">绑定辽宁东港/盘锦地理标志，提升产品溢价</p>
+        </div>
+        <div>
+            <p class="font-medium mb-1">✓ 溯源标签</p>
+            <p class="text-slate-600">每件产品附带溯源二维码，增强消费者信任</p>
+        </div>
+        <div>
+            <p class="font-medium mb-1">✓ 品牌故事</p>
+            <p class="text-slate-600">展示东北寒地养殖特色，讲好品牌故事</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

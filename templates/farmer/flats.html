@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}我的滩涂 - 滩智溯{% endblock %}
+{% block page_title %}我的滩涂{% endblock %}
+{% block page_desc %}管理您的所有养殖滩涂{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for item in flat_details %}
+    <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-slate-800">{{ item.flat.name }}</h3>
+                <p class="text-sm text-slate-500 mt-1">面积：{{ item.flat.area }} 亩</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs {% if item.flat.status == 'normal' %}bg-green-100 text-green-700{% elif item.flat.status == 'warning' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %}">
+                {{ item.flat.status_name }}
+            </span>
+        </div>
+        
+        {% if item.active_alert %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 pulse-red"></span>
+                <span class="text-sm font-medium text-red-700">{{ item.active_alert.level_info.name }}</span>
+            </div>
+            <p class="text-sm text-red-600">{{ item.active_alert.message }}</p>
+            {% if item.active_alert.advice %}
+            <p class="text-xs text-red-500 mt-2"><i class="fas fa-lightbulb mr-1"></i>{{ item.active_alert.advice }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if item.ecological_plan %}
+        <div class="bg-blue-50 rounded-lg p-3 mb-4">
+            <div class="flex items-center gap-2 text-sm">
+                <i class="fas fa-leaf text-green-600"></i>
+                <span class="text-slate-700">{{ item.ecological_plan.plan_notes }}</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="flex gap-2">
+            <a href="{{ url_for('water_quality.quality_trend_page', flat_id=item.flat.id) }}" class="flex-1 text-center py-2 px-3 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">
+                <i class="fas fa-chart-line mr-1"></i>水质趋势
+            </a>
+            <a href="{{ url_for('farmer.daily_log') }}?flat_id={{ item.flat.id }}" class="flex-1 text-center py-2 px-3 bg-green-50 text-green-600 rounded-lg text-sm hover:bg-green-100 transition">
+                <i class="fas fa-book mr-1"></i>记台账
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not flat_details %}
+<div class="bg-white rounded-xl p-12 text-center">
+    <i class="fas fa-map text-6xl text-slate-300 mb-4"></i>
+    <p class="text-slate-500">暂未关联滩涂，请联系合作社添加</p>
+</div>
+{% endif %}
+{% endblock %}

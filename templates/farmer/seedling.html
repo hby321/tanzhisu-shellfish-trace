@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}苗种投放记录 - 滩智溯{% endblock %}
+{% block page_title %}苗种投放记录{% endblock %}
+{% block page_desc %}规范苗种投放管理，可追溯来源{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 左侧：投放表单 -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl p-6 shadow-sm sticky top-6">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">
+                <i class="fas fa-plus-circle text-blue-500 mr-2"></i>新增苗种投放
+            </h3>
+            <form id="seedling-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">选择滩涂 *</label>
+                    <select name="flat_id" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="">请选择滩涂</option>
+                        {% for flat in flats %}
+                        <option value="{{ flat.id }}">{{ flat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">苗种品种 *</label>
+                    <select name="species" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="">请选择品种</option>
+                        <option value="缢蛏">缢蛏</option>
+                        <option value="文蛤">文蛤</option>
+                        <option value="蚬子">蚬子</option>
+                        <option value="扇贝">扇贝</option>
+                        <option value="贻贝">贻贝</option>
+                        <option value="菲律宾蛤仔">菲律宾蛤仔</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">投放数量（粒/斤）*</label>
+                    <input type="number" name="quantity" required min="1" step="0.01"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                           placeholder="请输入数量">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">苗种来源 *</label>
+                    <input type="text" name="source" required
+                           class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                           placeholder="如：丹东苗种场">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">操作人</label>
+                    <input type="text" name="operator" value="{{ current_user.real_name }}"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                    <i class="fas fa-save mr-2"></i>保存记录
+                </button>
+            </form>
+
+            {% if not flats %}
+            <div class="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
+                <i class="fas fa-exclamation-circle mr-1"></i>暂无可选滩涂，请联系合作社分配
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 右侧：历史记录 -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-slate-800">
+                    <i class="fas fa-history text-green-500 mr-2"></i>投放历史记录
+                </h3>
+                <span class="text-sm text-slate-500">共 {{ records|length }} 条</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-50">
+                        <tr class="text-left text-sm text-slate-500">
+                            <th class="px-6 py-3">投放时间</th>
+                            <th class="px-6 py-3">滩涂</th>
+                            <th class="px-6 py-3">品种</th>
+                            <th class="px-6 py-3">数量</th>
+                            <th class="px-6 py-3">来源</th>
+                            <th class="px-6 py-3">操作人</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr class="border-b hover:bg-slate-50">
+                            <td class="px-6 py-3 text-sm text-slate-500">{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else '-' }}</td>
+                            <td class="px-6 py-3 font-medium text-slate-800">{{ r.flat.name if r.flat else '未知' }}</td>
+                            <td class="px-6 py-3">
+                                <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">{{ r.species }}</span>
+                            </td>
+                            <td class="px-6 py-3 text-slate-600">{{ r.quantity }}</td>
+                            <td class="px-6 py-3 text-slate-600">{{ r.source }}</td>
+                            <td class="px-6 py-3 text-slate-600">{{ r.operator }}</td>
+                        </tr>
+                        {% endfor %}
+
+                        {% if not records %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                                暂无投放记录，请通过左侧表单添加
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 投放说明 -->
+        <div class="bg-blue-50 rounded-xl p-6 mt-6">
+            <h4 class="font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>苗种投放规范</h4>
+            <ul class="text-sm text-slate-600 space-y-1">
+                <li>• 寒地贝类苗种投放建议在4-5月水温稳定在15℃以上时进行</li>
+                <li>• 苗种来源需可追溯，确保无病害、无违禁药物残留</li>
+                <li>• 投放密度应根据滩涂面积、品种习性合理控制</li>
+                <li>• 投放后需密切观察7天，发现异常及时上报</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 成功弹窗 -->
+<div id="seedling-success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">苗种记录保存成功！</h3>
+            <button onclick="document.getElementById('seedling-success-modal').classList.add('hidden')" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                确定
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('seedling-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type=submit]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>保存中...';
+        
+        fetch("{{ request.path }}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('seedling-success-modal').classList.remove('hidden');
+                this.reset();
+            } else {
+                alert('保存失败：' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('网络错误，请重试');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>保存记录';
+        });
+    });
+</script>
+{% endblock %}

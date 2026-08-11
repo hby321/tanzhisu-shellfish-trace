@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}设备管理 - 滩智溯{% endblock %}
+{% block page_title %}低温传感硬件管理{% endblock %}
+{% block page_desc %}设备状态实时监控与管理{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">设备总数</p>
+                <p class="text-3xl font-bold text-slate-800 mt-1">{{ stats.total }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fas fa-microchip text-slate-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-green-600">在线设备</p>
+                <p class="text-3xl font-bold text-green-600 mt-1">{{ stats.online }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-wifi text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-red-600">离线/故障</p>
+                <p class="text-3xl font-bold text-red-600 mt-1">{{ stats.offline + stats.fault }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <i class="fas fa-exclamation text-red-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-amber-600">低电量</p>
+                <p class="text-3xl font-bold text-amber-600 mt-1">{{ stats.low_battery }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-battery-three-quarters text-amber-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 设备列表 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800">设备列表</h3>
+            {% if current_user.role == 'farmer' or current_user.role == 'cooperative' %}
+            <a href="{{ url_for('hardware.add_device') }}" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm">
+                <i class="fas fa-plus mr-1"></i>添加设备
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">设备ID</th>
+                    <th class="px-6 py-3">型号</th>
+                    <th class="px-6 py-3">所属滩涂</th>
+                    <th class="px-6 py-3">状态</th>
+                    <th class="px-6 py-3">电量</th>
+                    <th class="px-6 py-3">最后同步</th>
+                    <th class="px-6 py-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-4 font-medium text-slate-800">{{ device.device_id }}</td>
+                    <td class="px-6 py-4 text-slate-600">{{ device.model }}</td>
+                    <td class="px-6 py-4 text-slate-600">{{ device.flat.name if device.flat else '-' }}</td>
+                    <td class="px-6 py-4">
+                        {% if device.status == 'online' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-1"></span>在线
+                            </span>
+                        {% elif device.status == 'offline' %}
+                            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-slate-400 inline-block mr-1"></span>离线
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span>故障
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full {% if device.battery_level > 50 %}bg-green-500{% elif device.battery_level > 20 %}bg-amber-500{% else %}bg-red-500{% endif %}" 
+                                     style="width: {{ device.battery_level }}%;"></div>
+                            </div>
+                            <span class="text-sm text-slate-600">{{ device.battery_level }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">{{ device.last_sync.strftime('%Y-%m-%d %H:%M') if device.last_sync else '-' }}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="calibrateDevice('{{ device.device_id }}')" 
+                                class="text-blue-500 hover:text-blue-700 text-sm mr-2"
+                                {% if device.status != 'online' %}disabled style="opacity: 0.5;"{% endif %}>
+                            <i class="fas fa-sync"></i> 校准
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not devices %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-slate-400">暂无设备</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function calibrateDevice(deviceId) {
+        if (!confirm(`确认向设备 ${deviceId} 下发校准指令？`)) return;
+        
+        fetch(`/hardware/calibrate/${deviceId}`, {
+            method: 'POST'
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+</script>
+{% endblock %}

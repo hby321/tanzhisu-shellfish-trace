@@ -1,0 +1,25 @@
+@use '@/styles/variables.scss' as *;
+
+.tradePage { min-height: 100%; background: $color-bg-page; padding-bottom: $spacing-xl; }
+
+.tabs { display: flex; padding: $spacing-sm $page-padding; gap: $spacing-xs; }
+.tab { flex: 1; text-align: center; padding: $spacing-sm 0; border-radius: $radius-md; font-size: $font-size-md; background: $color-bg-card; color: $color-text-secondary; }
+.tabActive { background: $color-primary; color: #fff; font-weight: $font-weight-medium; }
+
+.section { padding: 0 $page-padding; }
+.sectionTitle { font-size: $font-size-lg; font-weight: $font-weight-semibold; color: $color-text-primary; margin-bottom: $spacing-sm; }
+
+.card { background: $color-bg-card; border-radius: $radius-lg; padding: $spacing-md; margin-bottom: $spacing-sm; box-shadow: $shadow-card; transition: all $transition-base; &:active { opacity: 0.95; transform: scale(0.99); } }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: $spacing-xs; }
+.cardTitle { font-size: $font-size-md; font-weight: $font-weight-medium; color: $color-text-primary; }
+.cardTag { font-size: $font-size-xs; padding: 4rpx 16rpx; border-radius: $radius-round; }
+.tagSupply { background: rgba(0, 180, 42, 0.1); color: $color-success; }
+.tagDemand { background: rgba(255, 125, 0, 0.1); color: $color-warning; }
+.tagClosed { background: $color-bg-hover; color: $color-text-tertiary; }
+.cardInfo { display: flex; gap: $spacing-md; margin-top: $spacing-xs; }
+.infoItem { font-size: $font-size-sm; color: $color-text-secondary; }
+.infoLabel { color: $color-text-tertiary; font-size: $font-size-xs; }
+.price { color: $color-error; font-weight: $font-weight-bold; font-size: $font-size-md; }
+.cardMeta { display: flex; gap: $spacing-sm; margin-top: $spacing-xs; font-size: $font-size-xs; color: $color-text-tertiary; }
+
+.publishBtn { position: fixed; bottom: $spacing-md; left: $page-padding; right: $page-padding; @include button-reset; height: $button-height-lg; background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%); color: #fff; border-radius: $radius-button; font-size: $font-size-md; font-weight: $font-weight-medium; box-shadow: $shadow-float; transition: all $transition-base; &:active { opacity: 0.9; } }

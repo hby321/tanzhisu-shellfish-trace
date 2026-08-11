@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block title %}溯源管理 - 滩智溯{% endblock %}
+{% block page_title %}区块链溯源管理{% endblock %}
+{% block page_desc %}全链路上链，数据不可篡改{% endblock %}
+
+{% block content %}
+<!-- 溯源统计 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">溯源总数</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|length }}</p>
+        <p class="text-xs opacity-75 mt-2">区块链上链记录</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">进行中</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|selectattr('status', 'equalto', 'processing')|list|length }}</p>
+        <p class="text-xs opacity-75 mt-2">待完成溯源</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">已完成</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|selectattr('status', 'equalto', 'completed')|list|length }}</p>
+        <p class="text-xs opacity-75 mt-2">全流程溯源</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">产品品类</p>
+        <p class="text-3xl font-bold mt-1">{{ traces|map(attribute='product_category')|unique|list|length }}</p>
+        <p class="text-xs opacity-75 mt-2">覆盖品类数</p>
+    </div>
+</div>
+
+<!-- 溯源列表 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-slate-800">溯源记录</h3>
+        <div class="flex gap-2">
+            <button onclick="batchExport()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition">
+                <i class="fas fa-download mr-1"></i>批量导出
+            </button>
+            {% if current_user.role in ['farmer', 'cooperative'] %}
+            <a href="{{ url_for('traceability.create_trace') }}" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">
+                <i class="fas fa-plus mr-1"></i>生成溯源码
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3"><input type="checkbox" onclick="toggleAll(this)"></th>
+                    <th class="px-6 py-3">批次码</th>
+                    <th class="px-6 py-3">产品</th>
+                    <th class="px-6 py-3">农户</th>
+                    <th class="px-6 py-3">状态</th>
+                    <th class="px-6 py-3">区块链哈希</th>
+                    <th class="px-6 py-3">创建时间</th>
+                    <th class="px-6 py-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trace in traces %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-4"><input type="checkbox" class="trace-checkbox" value="{{ trace.id }}"></td>
+                    <td class="px-6 py-4">
+                        <code class="text-sm bg-slate-100 px-2 py-1 rounded">{{ trace.batch_code }}</code>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-medium text-slate-800">{{ trace.product_name }}</p>
+                        <p class="text-xs text-slate-500">{{ trace.product_category }}</p>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">{{ trace.farmer.real_name if trace.farmer else '-' }}</td>
+                    <td class="px-6 py-4">
+                        {% if trace.status == 'completed' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">已完成</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">进行中</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <code class="text-xs text-slate-500 font-mono">{{ (trace.blockchain_hash or '-')[:16] }}...</code>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">{{ trace.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('traceability.trace_detail', trace_id=trace.id) }}" class="text-blue-500 hover:text-blue-700 text-sm">
+                            <i class="fas fa-eye"></i> 详情
+                        </a>
+                        <a href="{{ url_for('traceability.verify_trace', batch_code=trace.batch_code) }}" class="text-purple-500 hover:text-purple-700 text-sm ml-2">
+                            <i class="fas fa-qrcode"></i> 扫码页
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not traces %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-slate-400">暂无溯源记录</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 溯源创建表单 -->
+{% if current_user.role in ['farmer', 'cooperative'] %}
+<div class="bg-white rounded-xl p-6 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">生成溯源码</h3>
+    <form id="inline-trace-form" method="POST" action="{{ url_for('traceability.create_trace') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">产品名称 *</label>
+            <input type="text" name="product_name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500" placeholder="如：丹东野生缢蛏">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">产品品类 *</label>
+            <select name="product_category" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                <option value="">请选择</option>
+                <option value="缢蛏">缢蛏</option>
+                <option value="文蛤">文蛤</option>
+                <option value="蚬子">蚬子</option>
+                <option value="扇贝">扇贝</option>
+                <option value="贻贝">贻贝</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">苗种来源</label>
+            <input type="text" name="seed_source" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500" placeholder="如：丹东苗种场">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">投苗日期</label>
+            <input type="date" name="seed_date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">捕捞日期</label>
+            <input type="date" name="harvest_date" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">质检结果</label>
+            <select name="quality_check" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-purple-500">
+                <option value="合格">合格</option>
+                <option value="优良">优良</option>
+            </select>
+        </div>
+        <div class="md:col-span-2 lg:col-span-3">
+            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition">
+                <i class="fas fa-qrcode mr-2"></i>生成溯源码并上链
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleAll(checkbox) {
+        document.querySelectorAll('.trace-checkbox').forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+    }
+    
+    function batchExport() {
+        const checked = document.querySelectorAll('.trace-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选择要导出的记录');
+            return;
+        }
+        
+        const ids = Array.from(checked).map(cb => cb.value);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/trace/export';
+        
+        ids.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'trace_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // 列表页内的溯源码生成表单
+    const inlineForm = document.querySelector('#inline-trace-form');
+    if (inlineForm) {
+        inlineForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type=submit]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+            
+            fetch("{{ url_for('traceability.create_trace') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('溯源码生成成功！\n批次码: ' + data.batch_code);
+                    this.reset();
+                    location.reload();
+                } else {
+                    alert('生成失败：' + data.message);
+                }
+            })
+            .catch(err => {
+                alert('网络错误，请重试');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-qrcode mr-2"></i>生成溯源码并上链';
+            });
+        });
+    }
+</script>
+{% endblock %}

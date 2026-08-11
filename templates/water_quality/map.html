@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% block title %}水质可视化 - 滩智溯{% endblock %}
+{% block page_title %}全域水质可视化监控{% endblock %}
+{% block page_desc %}实时监测，数据驱动管理{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map { height: 560px; border-radius: 12px; }
+    .leaflet-popup-content-wrapper { border-radius: 10px; }
+    .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.6; }
+    .leaflet-popup-content strong { color: #1e40af; font-size: 14px; }
+    .custom-div-icon {
+        background: transparent;
+        border: none;
+    }
+    .marker-pin {
+        width: 28px;
+        height: 28px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .marker-pin span {
+        transform: rotate(45deg);
+        font-size: 11px;
+        color: white;
+        font-weight: bold;
+    }
+    .pulse-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 3px solid;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+        70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .map-legend {
+        background: white;
+        padding: 10px 14px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        font-size: 12px;
+        line-height: 1.8;
+    }
+    .map-legend h4 { margin: 0 0 6px; font-size: 13px; font-weight: bold; color: #334155; }
+    .map-legend .dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 统计概览 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">监测点位</p>
+        <p class="text-2xl font-bold mt-1">{{ flat_data|length }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">正常点位</p>
+        <p class="text-2xl font-bold mt-1">{{ flat_data|selectattr('status', 'equalto', 'normal')|list|length }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">预警点位</p>
+        <p class="text-2xl font-bold mt-1">{{ flat_data|selectattr('status', 'equalto', 'warning')|list|length }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">异常点位</p>
+        <p class="text-2xl font-bold mt-1">{{ flat_data|selectattr('status', 'equalto', 'danger')|list|length }}</p>
+    </div>
+</div>
+
+<!-- 真实地图 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-slate-800">辽宁滩涂水质分布图（真实地图 + 热力图）</h3>
+        <div class="flex gap-2 items-center">
+            <button id="heat-toggle" onclick="toggleHeat()" class="px-3 py-1 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg text-sm hover:from-red-600 hover:to-orange-600 transition">
+                关闭热力图
+            </button>
+            <select id="metric-select" class="px-3 py-1 border border-slate-200 rounded-lg text-sm">
+                <option value="temperature">水温</option>
+                <option value="oxygen">溶解氧</option>
+                <option value="salinity">盐度</option>
+                <option value="ph">pH值</option>
+            </select>
+            <button onclick="refreshMap()" class="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition">
+                <i class="fas fa-sync-alt mr-1"></i>刷新
+            </button>
+        </div>
+    </div>
+    <div id="map"></div>
+    <div class="flex items-center justify-center gap-6 mt-4">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-green-500"></span>
+            <span class="text-sm text-slate-600">正常</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <span class="text-sm text-slate-600">预警</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500"></span>
+            <span class="text-sm text-slate-600">异常</span>
+        </div>
+        <div class="text-sm text-slate-400">| 点击标记查看详情，滚轮缩放地图</div>
+    </div>
+</div>
+
+<!-- 点位列表 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">监测点位详情</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-sm text-slate-500 border-b">
+                    <th class="pb-3">点位名称</th>
+                    <th class="pb-3">水温 (℃)</th>
+                    <th class="pb-3">盐度 (‰)</th>
+                    <th class="pb-3">溶解氧 (mg/L)</th>
+                    <th class="pb-3">pH</th>
+                    <th class="pb-3">状态</th>
+                    <th class="pb-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flat in flat_data %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="py-3 text-slate-800 font-medium">{{ flat.name }}</td>
+                    {% if flat.water_data %}
+                    <td class="py-3 text-slate-600">{{ flat.water_data.temperature }}</td>
+                    <td class="py-3 text-slate-600">{{ flat.water_data.salinity }}</td>
+                    <td class="py-3 text-slate-600">{{ flat.water_data.oxygen }}</td>
+                    <td class="py-3 text-slate-600">{{ flat.water_data.ph }}</td>
+                    {% else %}
+                    <td class="py-3 text-slate-300">-</td>
+                    <td class="py-3 text-slate-300">-</td>
+                    <td class="py-3 text-slate-300">-</td>
+                    <td class="py-3 text-slate-300">-</td>
+                    {% endif %}
+                    <td class="py-3">
+                        {% if flat.status == 'normal' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">正常</span>
+                        {% elif flat.status == 'warning' %}
+                            <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">预警</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">异常</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3">
+                        <a href="javascript:void(0)" onclick="loadTrend({{ flat.id }})"
+                           class="text-blue-500 hover:text-blue-700 text-sm">查看趋势</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 趋势图弹窗 -->
+<div id="trend-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onclick="if(event.target===this)closeModal()">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-title" class="text-lg font-semibold"></h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">×</button>
+        </div>
+        <div class="flex gap-2 mb-4">
+            <button onclick="loadTrendData(7)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">近7天</button>
+            <button onclick="loadTrendData(30)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">近30天</button>
+            <button onclick="loadTrendData(90)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">近90天</button>
+        </div>
+        <div id="trend-chart" style="height: 400px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+    let map = null;
+    let currentFlatId = null;
+    let trendChart = null;
+    let markers = {};
+    let currentMetric = 'temperature';
+    let heatLayer = null;
+    let heatEnabled = true;
+    let baseMapLayer = null;
+
+    // 滩涂数据
+    const flatDataList = [
+        {% for flat in flat_data %}
+        {
+            id: {{ flat.id }},
+            name: '{{ flat.name }}',
+            lng: {{ flat.longitude }},
+            lat: {{ flat.latitude }},
+            temperature: {{ flat.water_data['temperature'] if flat.water_data else 0 }},
+            oxygen: {{ flat.water_data['oxygen'] if flat.water_data else 0 }},
+            salinity: {{ flat.water_data['salinity'] if flat.water_data else 0 }},
+            ph: {{ flat.water_data['ph'] if flat.water_data else 0 }},
+            status: '{{ flat.status }}',
+            area: {{ flat.area }},
+            farmer_id: {{ flat.farmer_id }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function getStatusColor(status) {
+        if (status === 'normal') return '#10b981';
+        if (status === 'warning') return '#f59e0b';
+        return '#ef4444';
+    }
+
+    function getStatusName(status) {
+        if (status === 'normal') return '正常';
+        if (status === 'warning') return '预警';
+        return '异常';
+    }
+
+    function getMetricColor(metric, value) {
+        if (metric === 'temperature') {
+            if (value < 5) return '#3b82f6';
+            if (value < 10) return '#06b6d4';
+            if (value < 15) return '#10b981';
+            if (value < 20) return '#f59e0b';
+            return '#ef4444';
+        } else if (metric === 'oxygen') {
+            if (value < 3) return '#ef4444';
+            if (value < 5) return '#f59e0b';
+            if (value < 7) return '#10b981';
+            return '#06b6d4';
+        } else if (metric === 'salinity') {
+            if (value < 28) return '#10b981';
+            if (value < 32) return '#06b6d4';
+            if (value < 35) return '#8b5cf6';
+            return '#7c3aed';
+        } else {
+            const dev = Math.abs(value - 8.0);
+            if (dev < 0.1) return '#10b981';
+            if (dev < 0.3) return '#06b6d4';
+            if (dev < 0.5) return '#f59e0b';
+            return '#ef4444';
+        }
+    }
+
+    function getMetricLabel(metric) {
+        const labels = {
+            temperature: { name: '水温', unit: '℃' },
+            oxygen: { name: '溶解氧', unit: 'mg/L' },
+            salinity: { name: '盐度', unit: '‰' },
+            ph: { name: 'pH', unit: '' }
+        };
+        return labels[metric];
+    }
+
+    // 各指标的范围和热力图颜色配置
+    const metricConfigs = {
+        temperature: {
+            min: 0, max: 25,
+            gradient: { 0.0: '#1e3a8a', 0.15: '#3b82f6', 0.3: '#06b6d4', 0.45: '#10b981', 0.6: '#84cc16', 0.75: '#f59e0b', 0.9: '#ef4444', 1.0: '#991b1b' },
+            radius: 80, blur: 60, maxZoom: 18, intensity: 2.5
+        },
+        oxygen: {
+            min: 0, max: 10,
+            gradient: { 0.0: '#991b1b', 0.15: '#ef4444', 0.3: '#f59e0b', 0.45: '#eab308', 0.6: '#84cc16', 0.75: '#10b981', 0.9: '#06b6d4', 1.0: '#0891b2' },
+            radius: 85, blur: 65, maxZoom: 18, intensity: 2.5
+        },
+        salinity: {
+            min: 20, max: 40,
+            gradient: { 0.0: '#10b981', 0.2: '#06b6d4', 0.4: '#3b82f6', 0.6: '#8b5cf6', 0.8: '#7c3aed', 1.0: '#4c1d95' },
+            radius: 75, blur: 55, maxZoom: 18, intensity: 2.5
+        },
+        ph: {
+            min: 6, max: 10,
+            gradient: { 0.0: '#991b1b', 0.15: '#ef4444', 0.3: '#f59e0b', 0.45: '#eab308', 0.6: '#10b981', 0.75: '#06b6d4', 0.9: '#8b5cf6', 1.0: '#4c1d95' },
+            radius: 70, blur: 50, maxZoom: 18, intensity: 2.5
+        }
+    };
+
+    // 生成热力图数据 - 增加更多数据点增强效果
+    function getHeatData(metric) {
+        const config = metricConfigs[metric];
+        let heatData = [];
+        
+        flatDataList.forEach(flat => {
+            let val = flat[metric] || 0;
+            // 归一化到0-1
+            let normalized = (val - config.min) / (config.max - config.min);
+            normalized = Math.max(0, Math.min(1, normalized));
+            
+            // 主点数据 - 使用更高的强度值
+            heatData.push([flat.lat, flat.lng, normalized * config.intensity]);
+            
+            // 添加周围的辅助点来增强热力效果（模拟热扩散）
+            const spread = 0.03; // 扩散范围
+            const points = [
+                { lat: flat.lat + spread, lng: flat.lng + spread * 0.8, factor: 0.8 },
+                { lat: flat.lat - spread, lng: flat.lng + spread * 0.8, factor: 0.8 },
+                { lat: flat.lat + spread, lng: flat.lng - spread * 0.8, factor: 0.8 },
+                { lat: flat.lat - spread, lng: flat.lng - spread * 0.8, factor: 0.8 },
+                { lat: flat.lat + spread * 0.6, lng: flat.lng, factor: 0.9 },
+                { lat: flat.lat - spread * 0.6, lng: flat.lng, factor: 0.9 },
+                { lat: flat.lat, lng: flat.lng + spread * 0.6, factor: 0.9 },
+                { lat: flat.lat, lng: flat.lng - spread * 0.6, factor: 0.9 },
+            ];
+            
+            points.forEach(p => {
+                heatData.push([p.lat, p.lng, normalized * config.intensity * p.factor]);
+            });
+        });
+        
+        return heatData;
+    }
+
+    // 创建/更新热力图层
+    function updateHeatLayer() {
+        if (!map) return;
+        
+        // 移除旧热力层
+        if (heatLayer) {
+            map.removeLayer(heatLayer);
+        }
+
+        if (!heatEnabled) return;
+
+        const config = metricConfigs[currentMetric];
+        const heatData = getHeatData(currentMetric);
+
+        // 创建热力图 - 增强配置使效果更明显
+        heatLayer = L.heatLayer(heatData, {
+            radius: config.radius,
+            blur: config.blur,
+            maxZoom: config.maxZoom || 18,
+            max: 3.0,  // 增大最大值范围，让颜色映射更明显
+            minOpacity: 0.3,  // 提高最低透明度
+            gradient: config.gradient,
+            pane: 'overlayPane'
+        }).addTo(map);
+    }
+
+    // 切换热力图显示
+    function toggleHeat() {
+        heatEnabled = !heatEnabled;
+        if (heatEnabled) {
+            updateHeatLayer();
+            document.getElementById('heat-toggle').textContent = '关闭热力图';
+        } else {
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+                heatLayer = null;
+            }
+            document.getElementById('heat-toggle').textContent = '开启热力图';
+        }
+    }
+
+    // 添加热力图图例
+    function addHeatLegend() {
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'info legend heat-legend');
+            div.innerHTML = `
+                <div style="background:white;padding:12px 16px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:12px;line-height:2;min-width:140px">
+                    <h4 style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#334155;border-bottom:2px solid #3b82f6;padding-bottom:6px">
+                        🔥 水质热力图例
+                    </h4>
+                    <div id="heat-legend-items"></div>
+                    <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b">
+                        当前指标: <span id="current-metric-name" style="font-weight:bold;color:#3b82f6">水温</span>
+                    </div>
+                </div>
+            `;
+            updateLegendItems(div);
+            return div;
+        };
+        legend.addTo(map);
+        window._heatLegend = legend;
+    }
+
+    function updateLegendItems(div) {
+        const config = metricConfigs[currentMetric];
+        const metricLabel = getMetricLabel(currentMetric);
+        const items = [];
+        const steps = 6;
+        
+        // 更新当前指标名称
+        const metricNameEl = document.getElementById('current-metric-name');
+        if (metricNameEl) {
+            metricNameEl.textContent = metricLabel.name;
+        }
+        
+        for (let i = 0; i <= steps; i++) {
+            const ratio = i / steps;
+            let color = '#ccc';
+            const keys = Object.keys(config.gradient).map(Number).sort((a, b) => a - b);
+            for (let j = 0; j < keys.length - 1; j++) {
+                if (ratio >= keys[j] && ratio <= keys[j + 1]) {
+                    // 线性插值
+                    const t = (ratio - keys[j]) / (keys[j + 1] - keys[j]);
+                    color = interpolateColor(config.gradient[keys[j]], config.gradient[keys[j + 1]], t);
+                    break;
+                }
+            }
+            const val = config.min + ratio * (config.max - config.min);
+            const unit = metricLabel.unit;
+            items.push(`
+                <div style="display:flex;align-items:center;gap:8px;margin:2px 0">
+                    <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${color};box-shadow:0 1px 3px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.8)"></span>
+                    <span style="font-weight:500">${val.toFixed(1)}${unit}</span>
+                </div>
+            `);
+        }
+        const container = document.getElementById('heat-legend-items');
+        if (container) {
+            container.innerHTML = items.join('');
+        }
+    }
+
+    function interpolateColor(c1, c2, t) {
+        const hex = (s) => parseInt(s.slice(1), 16);
+        const r1 = (hex(c1) >> 16) & 255, g1 = (hex(c1) >> 8) & 255, b1 = hex(c1) & 255;
+        const r2 = (hex(c2) >> 16) & 255, g2 = (hex(c2) >> 8) & 255, b2 = hex(c2) & 255;
+        const r = Math.round(r1 + (r2 - r1) * t);
+        const g = Math.round(g1 + (g2 - g1) * t);
+        const b = Math.round(b1 + (b2 - b1) * t);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // 初始化真实地图
+    function initMap() {
+        // 以辽宁省为中心
+        map = L.map('map', {
+            center: [40.5, 123.0],
+            zoom: 7,
+            minZoom: 6,
+            maxZoom: 18,
+            zoomControl: true,
+            attributionControl: true
+        });
+        window.map = map;
+
+        // 使用高德地图瓦片（国内稳定快速）
+        baseMapLayer = L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+            subdomains: ['1', '2', '3', '4'],
+            attribution: '&copy; 高德地图 | 辽宁滩涂水质监测',
+            maxZoom: 18
+        }).addTo(map);
+
+        // 限制视野在中国东北
+        map.setMaxBounds([[37.5, 118.0], [43.5, 128.0]]);
+
+        // 添加热力图层
+        updateHeatLayer();
+
+        // 添加滩涂标记
+        addMarkers();
+
+        // 添加比例尺
+        L.control.scale({ imperial: false }).addTo(map);
+
+        // 添加热力图图例
+        addHeatLegend();
+    }
+
+    // 添加所有滩涂标记
+    function addMarkers() {
+        // 清除旧标记
+        Object.values(markers).forEach(m => map.removeLayer(m));
+        markers = {};
+
+        flatDataList.forEach(flat => {
+            const color = getStatusColor(flat.status);
+            
+            // 创建自定义div标记
+            const iconHtml = flat.status !== 'normal' 
+                ? `<div class="pulse-dot" style="border-color:${color};background:${color}"></div>`
+                : `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`;
+            
+            const icon = L.divIcon({
+                html: iconHtml,
+                className: 'custom-div-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            const marker = L.marker([flat.lat, flat.lng], { icon: icon }).addTo(map);
+
+            // 创建popup内容
+            const popupContent = buildPopup(flat);
+            marker.bindPopup(popupContent, { maxWidth: 260 });
+
+            marker.on('click', function() {
+                map.panTo([flat.lat, flat.lng]);
+            });
+
+            markers[flat.id] = marker;
+        });
+    }
+
+    // 构建popup内容
+    function buildPopup(flat) {
+        const area = flat.farmer_id <= 2 ? '丹东/营口沿海' : '盘锦/锦州沿海';
+        const metricInfo = getMetricLabel(currentMetric);
+        const metricVal = flat[currentMetric];
+        const metricColor = getMetricColor(currentMetric, metricVal);
+        
+        return `
+            <div style="font-weight:bold;font-size:15px;margin-bottom:8px;color:#1e40af">${flat.name}</div>
+            <div style="margin-bottom:8px;font-size:12px;color:#64748b">📍 ${area} | 坐标: ${flat.lng.toFixed(2)}, ${flat.lat.toFixed(2)}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px">
+                <div>🌡️ 水温: <b>${flat.temperature}℃</b></div>
+                <div>💨 溶解氧: <b>${flat.oxygen}mg/L</b></div>
+                <div>🌊 盐度: <b>${flat.salinity}‰</b></div>
+                <div>⚗️ pH: <b>${flat.ph}</b></div>
+            </div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;font-size:12px">
+                状态: <span style="color:${getStatusColor(flat.status)};font-weight:bold">${getStatusName(flat.status)}</span>
+                ${flat.status !== 'normal' ? ' ⚠️' : ''}
+            </div>
+            <div style="margin-top:10px;padding:6px;background:${metricColor}20;border-radius:6px;font-size:12px;text-align:center">
+                ${metricInfo.name}: <b style="color:${metricColor}">${metricVal}${metricInfo.unit}</b>
+            </div>
+            <div style="margin-top:8px;text-align:center">
+                <button onclick="loadTrend(${flat.id})" style="background:#3b82f6;color:white;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px">
+                    📊 查看趋势
+                </button>
+            </div>
+        `;
+    }
+
+    // 刷新标记颜色（当切换指标时）
+    function updateMarkers() {
+        // 更新热力图层
+        updateHeatLayer();
+
+        // 更新图例
+        if (window._heatLegend) {
+            const legendContainer = window._heatLegend.getContainer();
+            if (legendContainer) {
+                updateLegendItems(legendContainer);
+            }
+        }
+
+        // 更新标记popup
+        flatDataList.forEach(flat => {
+            const marker = markers[flat.id];
+            if (!marker) return;
+            marker.setPopupContent(buildPopup(flat));
+        });
+
+        // 更新已打开的popup
+        if (map._popup && map._popup._source) {
+            const flat = flatDataList.find(f => f.id === map._popup._source._id);
+            if (flat) {
+                map._popup.setContent(buildPopup(flat));
+            }
+        }
+    }
+
+    function refreshMap() {
+        updateMarkers();
+    }
+
+    // 指标切换
+    document.getElementById('metric-select').addEventListener('change', function(e) {
+        currentMetric = e.target.value;
+        updateMarkers();
+    });
+
+    // 窗口resize
+    window.addEventListener('resize', () => {
+        if (map) map.invalidateSize();
+        if (trendChart) trendChart.resize();
+    });
+
+    // 初始化
+    initMap();
+
+    // 趋势图
+    function loadTrend(flatId) {
+        currentFlatId = flatId;
+        document.getElementById('trend-modal').classList.remove('hidden');
+        loadTrendData(7);
+    }
+
+    function closeModal() {
+        document.getElementById('trend-modal').classList.add('hidden');
+        if (trendChart) {
+            trendChart.dispose();
+            trendChart = null;
+        }
+    }
+
+    function loadTrendData(days) {
+        if (!currentFlatId) return;
+
+        fetch(`/water/quality-trend/${currentFlatId}?days=${days}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('modal-title').textContent = data.flat_name + ' - ' + days + '天趋势';
+
+                if (!trendChart) {
+                    trendChart = echarts.init(document.getElementById('trend-chart'));
+                }
+
+                if (data.success && data.chart_data && data.chart_data.dates.length > 0) {
+                    trendChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        legend: { data: ['水温', '盐度', '溶解氧', 'pH'] },
+                        grid: { left: 60, right: 60, bottom: 30 },
+                        xAxis: { 
+                            type: 'category', 
+                            data: data.chart_data.dates,
+                            axisLabel: {
+                                formatter: function(value) {
+                                    if (value && value.includes('T')) {
+                                        const parts = value.split('T');
+                                        return parts[0].substring(5) + ' ' + parts[1];
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        yAxis: { type: 'value' },
+                        series: [
+                            { name: '水温', type: 'line', data: data.chart_data.temperature, smooth: true, itemStyle: { color: '#3b82f6' } },
+                            { name: '盐度', type: 'line', data: data.chart_data.salinity, smooth: true, itemStyle: { color: '#8b5cf6' } },
+                            { name: '溶解氧', type: 'line', data: data.chart_data.oxygen, smooth: true, itemStyle: { color: '#10b981' } },
+                            { name: 'pH', type: 'line', data: data.chart_data.ph, smooth: true, itemStyle: { color: '#f59e0b' } }
+                        ]
+                    });
+                }
+            });
+    }
+</script>
+{% endblock %}

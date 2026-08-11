@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}硬件租赁台账 - 滩智溯{% endblock %}
+{% block page_title %}硬件租赁台账{% endblock %}
+{% block page_desc %}合作社设备租赁与收益统一管理{% endblock %}
+
+{% block content %}
+<!-- 顶部统计卡片 -->
+{% set ns = namespace(active=0, income=0) %}
+{% for d in devices %}
+    {% if d.status == 'online' %}{% set ns.active = ns.active + 1 %}{% endif %}
+    {% if d.monthly_fee %}{% set ns.income = ns.income + d.monthly_fee %}{% endif %}
+{% endfor %}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">总租赁数</p>
+                <p class="text-4xl font-bold mt-2">{{ devices|length }}</p>
+                <p class="text-xs opacity-75 mt-2">已租赁设备总数</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-microchip text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">活跃租赁</p>
+                <p class="text-4xl font-bold mt-2">{{ ns.active }}</p>
+                <p class="text-xs opacity-75 mt-2">设备在线运行中</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-wifi text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">月租金总收入</p>
+                <p class="text-4xl font-bold mt-2">¥{{ ns.income }}</p>
+                <p class="text-xs opacity-75 mt-2">合作社月度租金收入</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-coins text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 租赁设备表格 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-800">
+            <i class="fas fa-file-contract text-amber-500 mr-2"></i>租赁设备台账
+        </h3>
+        <div class="flex items-center gap-2">
+            <input type="text" id="search-input" oninput="filterDevices()" placeholder="搜索设备/滩涂/农户"
+                   class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+            <span class="text-sm text-slate-500">共 {{ devices|length }} 条</span>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">设备ID</th>
+                    <th class="px-6 py-3">型号</th>
+                    <th class="px-6 py-3">关联滩涂</th>
+                    <th class="px-6 py-3">租赁农户</th>
+                    <th class="px-6 py-3">租赁起止</th>
+                    <th class="px-6 py-3">月租金</th>
+                    <th class="px-6 py-3">状态</th>
+                </tr>
+            </thead>
+            <tbody id="device-tbody">
+                {% for d in devices %}
+                <tr class="border-b hover:bg-slate-50"
+                    data-keyword="{{ d.device_id }} {{ d.model }} {{ d.flat.name if d.flat else '' }} {{ d.flat.farmer.real_name if d.flat and d.flat.farmer else '' }}">
+                    <td class="px-6 py-4">
+                        <code class="text-sm bg-slate-100 px-2 py-1 rounded text-slate-700">{{ d.device_id }}</code>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">{{ d.model }}</td>
+                    <td class="px-6 py-4 text-slate-600">{{ d.flat.name if d.flat else '-' }}</td>
+                    <td class="px-6 py-4 font-medium text-slate-800">{{ d.flat.farmer.real_name if d.flat and d.flat.farmer else '-' }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500">
+                        {% if d.rental_start or d.rental_end %}
+                        <i class="fas fa-calendar mr-1 text-slate-400"></i>
+                        {{ d.rental_start.strftime('%Y-%m-%d') if d.rental_start else '?' }}
+                        <span class="text-slate-400 mx-1">~</span>
+                        {{ d.rental_end.strftime('%Y-%m-%d') if d.rental_end else '?' }}
+                        {% else %}
+                        <span class="text-slate-300">未登记</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-medium text-amber-700">
+                        {% if d.monthly_fee %}¥{{ d.monthly_fee }}{% else %}-{% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if d.status == 'online' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-1"></span>在线
+                            </span>
+                        {% elif d.status == 'offline' %}
+                            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-slate-400 inline-block mr-1"></span>离线
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span>故障
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not devices %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        暂无租赁设备记录
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 台账说明 -->
+<div class="bg-blue-50 rounded-xl p-6 mt-6">
+    <h4 class="font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>租赁台账说明</h4>
+    <ul class="text-sm text-slate-600 space-y-1">
+        <li>• 本台账记录合作社向社员出租的所有硬件设备</li>
+        <li>• 月租金收入用于设备折旧、维护与升级</li>
+        <li>• 设备出现故障时，合作社负责免费维修与更换</li>
+        <li>• 租赁到期需办理续租或归还手续</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterDevices() {
+        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+        document.querySelectorAll('#device-tbody tr[data-keyword]').forEach(row => {
+            const text = (row.dataset.keyword || '').toLowerCase();
+            row.style.display = (!keyword || text.includes(keyword)) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

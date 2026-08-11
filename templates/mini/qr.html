@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溯源二维码 - 滩智溯</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);
+            min-height: 100vh;
+        }
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(21, 1fr);
+            grid-template-rows: repeat(21, 1fr);
+            gap: 1px;
+            width: 220px;
+            height: 220px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .qr-cell {
+            background: #fff;
+        }
+        .qr-cell.dark {
+            background: #0f172a;
+        }
+        /* 三个定位角 */
+        .qr-finder {
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            border: 6px solid #0f172a;
+            border-radius: 4px;
+            background: #fff;
+        }
+        .qr-finder::after {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px;
+            width: 14px; height: 14px;
+            background: #0f172a;
+            border-radius: 2px;
+        }
+        .qr-finder.tl { top: 10px; left: 10px; }
+        .qr-finder.tr { top: 10px; right: 10px; }
+        .qr-finder.bl { bottom: 10px; left: 10px; }
+        .qr-container {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+        <!-- 顶部品牌 -->
+        <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-5 text-white text-center">
+            <h1 class="text-xl font-bold flex items-center justify-center gap-2">
+                <i class="fas fa-water text-cyan-300"></i>
+                滩智溯
+            </h1>
+            <p class="text-xs opacity-80 mt-1">寒地贝类智慧养殖 · 区块链溯源</p>
+        </div>
+
+        <!-- 产品信息 -->
+        <div class="p-6 text-center">
+            <p class="text-xs text-slate-400 uppercase tracking-wider">区块链溯源产品</p>
+            <h2 class="text-2xl font-bold text-slate-800 mt-1">{{ trace.product_name }}</h2>
+            <p class="text-sm text-slate-500 mt-1">{{ trace.product_category }}</p>
+
+            <!-- 二维码占位 -->
+            <div class="my-6">
+                <div class="qr-container">
+                    <div class="qr-grid" id="qr-grid"></div>
+                    <div class="qr-finder tl"></div>
+                    <div class="qr-finder tr"></div>
+                    <div class="qr-finder bl"></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">
+                    <i class="fas fa-camera mr-1"></i>扫描二维码查看完整溯源信息
+                </p>
+            </div>
+
+            <!-- 批次码 -->
+            <div class="bg-slate-50 rounded-lg p-3 mb-4">
+                <p class="text-xs text-slate-500">批次码</p>
+                <code class="text-sm text-slate-800 font-mono break-all">{{ trace.batch_code }}</code>
+            </div>
+
+            <!-- 状态徽标 -->
+            <div class="flex items-center justify-center gap-2 mb-4">
+                {% if trace.status == 'completed' %}
+                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>溯源已完成
+                </span>
+                {% else %}
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    <i class="fas fa-spinner mr-1"></i>溯源进行中
+                </span>
+                {% endif %}
+                {% if trace.quality_check %}
+                <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                    <i class="fas fa-award mr-1"></i>质检：{{ trace.quality_check }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 溯源信息摘要 -->
+        <div class="px-6 pb-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <i class="fas fa-stream text-purple-500"></i>溯源信息摘要
+            </h3>
+            <div class="space-y-2 text-sm">
+                <div class="flex items-start justify-between p-2 bg-slate-50 rounded">
+                    <span class="text-slate-500"><i class="fas fa-user mr-1 w-4"></i>生产者</span>
+                    <span class="font-medium text-slate-800">{{ trace.farmer.real_name if trace.farmer else '未知' }}</span>
+                </div>
+                <div class="flex items-start justify-between p-2 bg-slate-50 rounded">
+                    <span class="text-slate-500"><i class="fas fa-seedling mr-1 w-4"></i>苗种来源</span>
+                    <span class="font-medium text-slate-800">{{ trace.seed_source or '未登记' }}</span>
+                </div>
+                <div class="flex items-start justify-between p-2 bg-slate-50 rounded">
+                    <span class="text-slate-500"><i class="fas fa-calendar-plus mr-1 w-4"></i>投苗日期</span>
+                    <span class="font-medium text-slate-800">{{ trace.seed_date.strftime('%Y-%m-%d') if trace.seed_date else '未登记' }}</span>
+                </div>
+                <div class="flex items-start justify-between p-2 bg-slate-50 rounded">
+                    <span class="text-slate-500"><i class="fas fa-calendar-check mr-1 w-4"></i>捕捞日期</span>
+                    <span class="font-medium text-slate-800">{{ trace.harvest_date.strftime('%Y-%m-%d') if trace.harvest_date else '未登记' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 区块链哈希 -->
+        <div class="bg-slate-800 p-5 text-white">
+            <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                <i class="fas fa-link text-cyan-400"></i>区块链存证哈希
+            </h3>
+            <code class="block text-xs text-cyan-300 font-mono break-all bg-slate-900/60 p-2 rounded">
+                {{ trace.blockchain_hash or '尚未上链' }}
+            </code>
+            <p class="text-xs text-slate-400 mt-2">
+                <i class="fas fa-shield-alt mr-1"></i>本溯源数据已上链，不可篡改
+                {% if trace.created_at %}
+                <span class="block mt-1">上链时间：{{ trace.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- 底部 -->
+        <div class="bg-slate-50 p-3 text-center">
+            <p class="text-xs text-slate-400">
+                <i class="fas fa-water mr-1"></i>滩智溯 · 寒地贝类智慧养殖平台
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 使用批次码生成稳定的伪随机二维码图案（占位模拟）
+        (function() {
+            const grid = document.getElementById('qr-grid');
+            const seed = "{{ trace.batch_code }}" || "default";
+            // 简单哈希函数
+            function hash(str, salt) {
+                let h = 0;
+                for (let i = 0; i < str.length; i++) {
+                    h = ((h << 5) - h + str.charCodeAt(i) + salt) | 0;
+                }
+                return Math.abs(h);
+            }
+            // 生成 21x21 网格
+            for (let r = 0; r < 21; r++) {
+                for (let c = 0; c < 21; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'qr-cell';
+                    // 跳过三个定位角区域
+                    const isFinder = (r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7);
+                    if (!isFinder) {
+                        const v = hash(seed, r * 21 + c) % 2;
+                        if (v === 0) cell.classList.add('dark');
+                    }
+                    grid.appendChild(cell);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}溯源详情 - 滩智溯{% endblock %}
+{% block page_title %}溯源详情{% endblock %}
+{% block page_desc %}全链路溯源信息展示{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- 溯源头部 -->
+    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-6 text-white mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">{{ trace.product_name }}</h1>
+                <p class="opacity-90 mt-1">{{ trace.product_category }} · 批次码 {{ trace.batch_code }}</p>
+            </div>
+            <span class="px-4 py-2 bg-white/20 rounded-lg text-sm">
+                {{ trace.status_name }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- 基础信息 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+        <h3 class="font-medium text-slate-800 mb-4">基础信息</h3>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="text-slate-500">产品名称</p>
+                <p class="font-medium text-slate-800 mt-1">{{ trace.product_name }}</p>
+            </div>
+            <div>
+                <p class="text-slate-500">产品品类</p>
+                <p class="font-medium text-slate-800 mt-1">{{ trace.product_category }}</p>
+            </div>
+            <div>
+                <p class="text-slate-500">生产者</p>
+                <p class="font-medium text-slate-800 mt-1">{{ trace.farmer.real_name if trace.farmer else '未知' }}</p>
+            </div>
+            <div>
+                <p class="text-slate-500">产地</p>
+                <p class="font-medium text-slate-800 mt-1">{{ trace.farmer.area if trace.farmer else '未知' }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 养殖流程 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+        <h3 class="font-medium text-slate-800 mb-4">养殖流程</h3>
+        <div class="space-y-4">
+            <div class="flex items-start gap-4 p-3 bg-slate-50 rounded-lg">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">1</div>
+                <div>
+                    <p class="font-medium text-slate-800">苗种投放</p>
+                    <p class="text-sm text-slate-600">
+                        来源：{{ trace.seed_source or '未知' }}
+                        日期：{{ trace.seed_date.strftime('%Y-%m-%d') if trace.seed_date else '未知' }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4 p-3 bg-slate-50 rounded-lg">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">2</div>
+                <div>
+                    <p class="font-medium text-slate-800">养殖管理</p>
+                    <p class="text-sm text-slate-600">全程水质监测，AI环境调控，预警响应</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4 p-3 bg-slate-50 rounded-lg">
+                <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">3</div>
+                <div>
+                    <p class="font-medium text-slate-800">捕捞收获</p>
+                    <p class="text-sm text-slate-600">
+                        日期：{{ trace.harvest_date.strftime('%Y-%m-%d') if trace.harvest_date else '未知' }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4 p-3 bg-slate-50 rounded-lg">
+                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">4</div>
+                <div>
+                    <p class="font-medium text-slate-800">质量检测</p>
+                    <p class="text-sm text-slate-600">质检结果：{{ trace.quality_check }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 区块链信息 -->
+    <div class="bg-slate-800 rounded-xl p-6 text-white">
+        <h3 class="font-medium mb-4"><i class="fas fa-link mr-2"></i>区块链存证</h3>
+        <div class="space-y-3 text-sm">
+            <div>
+                <p class="text-slate-400">区块链哈希</p>
+                <code class="block mt-1 bg-slate-700 p-2 rounded text-xs break-all">{{ trace.blockchain_hash }}</code>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-slate-400">创建时间</p>
+                    <p class="mt-1">{{ trace.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+                <div>
+                    <p class="text-slate-400">更新时间</p>
+                    <p class="mt-1">{{ trace.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 text-center">
+        <a href="{{ url_for('traceability.trace_list') }}" class="text-blue-500 hover:text-blue-700">← 返回溯源列表</a>
+    </div>
+</div>
+{% endblock %}

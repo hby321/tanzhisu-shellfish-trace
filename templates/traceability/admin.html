@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% block title %}溯源管理 - 滩智溯{% endblock %}
+{% block page_title %}溯源统一管理中心{% endblock %}
+{% block page_desc %}全链路溯源数据管理、筛选、批量操作与统计分析{% endblock %}
+
+{% block content %}
+<!-- 溯源管理横幅 -->
+<div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-6 text-white mb-6 shadow-lg">
+    <div class="flex items-center gap-6">
+        <div class="flex-shrink-0 w-24 h-24 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <i class="fas fa-link text-white text-5xl"></i>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-xl font-bold">溯源统一管理中心</h3>
+            <p class="text-sm opacity-90 mt-1">全链路溯源数据管理、筛选、批量操作与统计分析</p>
+            <div class="flex gap-4 mt-3 text-sm">
+                <span><i class="fas fa-link mr-1"></i>区块链存证</span>
+                <span><i class="fas fa-filter mr-1"></i>多维度筛选</span>
+                <span><i class="fas fa-chart-bar mr-1"></i>实时统计</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">总记录数</p>
+                <p class="text-3xl font-bold mt-1">{{ stats.total }}</p>
+            </div>
+            <i class="fas fa-database text-3xl opacity-50"></i>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">进行中</p>
+                <p class="text-3xl font-bold mt-1">{{ stats.processing }}</p>
+            </div>
+            <i class="fas fa-clock text-3xl opacity-50"></i>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">已完成</p>
+                <p class="text-3xl font-bold mt-1">{{ stats.completed }}</p>
+            </div>
+            <i class="fas fa-check-circle text-3xl opacity-50"></i>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">完成率</p>
+                <p class="text-3xl font-bold mt-1">{{ "%.0f"|format(stats.completed / stats.total * 100 if stats.total > 0 else 0) }}%</p>
+            </div>
+            <i class="fas fa-percentage text-3xl opacity-50"></i>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">品类分布</h3>
+        <div id="category-chart" style="height: 280px;"></div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">状态分布</h3>
+        <div id="status-chart" style="height: 280px;"></div>
+    </div>
+</div>
+
+<!-- 筛选和操作区 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <form method="get" class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-filter text-slate-400"></i>
+            <span class="text-sm text-slate-600">筛选：</span>
+        </div>
+        <select name="status" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="">全部状态</option>
+            <option value="processing" {% if filters.status == 'processing' %}selected{% endif %}>进行中</option>
+            <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>已完成</option>
+        </select>
+        <select name="category" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="">全部品类</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+        <select name="farmer_id" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="">全部农户</option>
+            {% for f in farmers %}
+            <option value="{{ f.id }}" {% if filters.farmer_id == f.id %}selected{% endif %}>{{ f.real_name }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="keyword" value="{{ filters.keyword }}" placeholder="搜索批次码/产品/质检..." class="px-3 py-2 border border-slate-200 rounded-lg text-sm w-64">
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">
+            <i class="fas fa-search mr-1"></i>筛选
+        </button>
+        <a href="/trace/admin" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">重置</a>
+    </form>
+</div>
+
+<!-- 操作按钮 -->
+<div class="bg-white rounded-xl p-4 shadow-sm mb-6 flex flex-wrap items-center gap-3">
+    <button onclick="toggleSelectAll()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200">
+        <i class="fas fa-check-double mr-1"></i>全选/反选
+    </button>
+    <button onclick="batchAction('complete')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600" {% if current_user.role != 'enterprise' %}disabled style="opacity:0.5"{% endif %}>
+        <i class="fas fa-check mr-1"></i>批量完成
+    </button>
+    <button onclick="batchAction('delete')" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600" {% if current_user.role not in ['cooperative', 'regulator'] %}disabled style="opacity:0.5"{% endif %}>
+        <i class="fas fa-trash mr-1"></i>批量删除
+    </button>
+    <button onclick="exportSelected()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600">
+        <i class="fas fa-download mr-1"></i>导出选中
+    </button>
+    <button onclick="location.href='/trace/create'" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600">
+        <i class="fas fa-plus mr-1"></i>新建溯源
+    </button>
+    <div class="ml-auto text-sm text-slate-500">
+        共 {{ traces|length }} 条记录
+    </div>
+</div>
+
+<!-- 溯源记录表格 -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-sm text-slate-500 border-b bg-slate-50">
+                    <th class="p-3"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                    <th class="p-3">批次码</th>
+                    <th class="p-3">产品名称</th>
+                    <th class="p-3">品类</th>
+                    <th class="p-3">农户</th>
+                    <th class="p-3">状态</th>
+                    <th class="p-3">质检</th>
+                    <th class="p-3">创建时间</th>
+                    <th class="p-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in traces %}
+                <tr class="border-b hover:bg-slate-50 transition">
+                    <td class="p-3">
+                        <input type="checkbox" class="trace-checkbox" value="{{ t.id }}">
+                    </td>
+                    <td class="p-3">
+                        <a href="/trace/detail/{{ t.id }}" class="text-blue-600 hover:font-medium">{{ t.batch_code }}</a>
+                    </td>
+                    <td class="p-3 text-slate-800">{{ t.product_name }}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded">{{ t.product_category }}</span>
+                    </td>
+                    <td class="p-3 text-slate-600">{{ t.farmer.real_name if t.farmer else '-' }}</td>
+                    <td class="p-3">
+                        {% if t.status == 'completed' %}
+                        <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">已完成</span>
+                        {% else %}
+                        <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">进行中</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3 text-slate-600">{{ t.quality_check or '-' }}</td>
+                    <td class="p-3 text-slate-500 text-sm">{{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '' }}</td>
+                    <td class="p-3">
+                        <div class="flex gap-2">
+                            <a href="/trace/detail/{{ t.id }}" class="text-blue-500 hover:text-blue-700 text-sm">详情</a>
+                            <a href="/trace/verify/{{ t.batch_code }}" class="text-green-500 hover:text-green-700 text-sm" target="_blank">查看</a>
+                            {% if current_user.role in ['cooperative', 'regulator'] %}
+                            <button onclick="deleteTrace({{ t.id }})" class="text-red-500 hover:text-red-700 text-sm">删除</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not traces %}
+                <tr>
+                    <td colspan="9" class="p-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p>暂无溯源记录</p>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 初始化图表
+    fetch('/trace/api/stats')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // 品类分布图
+                const catChart = echarts.init(document.getElementById('category-chart'));
+                catChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: '0%' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: data.category_stats.map(s => ({value: s.count, name: s.category}))
+                    }]
+                });
+                
+                // 状态分布图
+                const statusChart = echarts.init(document.getElementById('status-chart'));
+                const statusColors = { 'processing': '#3b82f6', 'completed': '#10b981' };
+                const statusNames = { 'processing': '进行中', 'completed': '已完成' };
+                statusChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: '0%' },
+                    series: [{
+                        type: 'pie',
+                        radius: '70%',
+                        data: data.status_stats.map(s => ({
+                            value: s.count, 
+                            name: statusNames[s.status] || s.status,
+                            itemStyle: { color: statusColors[s.status] || '#999' }
+                        }))
+                    }]
+                });
+            }
+        });
+    
+    function toggleSelectAll() {
+        const checkbox = document.getElementById('select-all');
+        document.querySelectorAll('.trace-checkbox').forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+    }
+    
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.trace-checkbox:checked')).map(cb => cb.value);
+    }
+    
+    function batchAction(action) {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+            alert('请先选择记录');
+            return;
+        }
+        
+        if (!confirm(`确认${action === 'complete' ? '完成' : '删除'} ${ids.length} 条记录？`)) return;
+        
+        const url = action === 'complete' ? '/trace/admin/batch-complete' : '/trace/admin/batch-delete';
+        const formData = new FormData();
+        ids.forEach(id => formData.append('trace_ids', id));
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+    
+    function deleteTrace(id) {
+        if (!confirm('确认删除此溯源记录？')) return;
+        
+        fetch(`/trace/admin/delete/${id}`, {
+            method: 'POST'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+    
+    function exportSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+            alert('请先选择记录');
+            return;
+        }
+        
+        const formData = new FormData();
+        ids.forEach(id => formData.append('trace_ids', id));
+        
+        fetch('/trace/export', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trace_export.csv';
+            a.click();
+        });
+    }
+</script>
+{% endblock %}

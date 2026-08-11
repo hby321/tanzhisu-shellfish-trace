@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}水质数据 - 滩智溯{% endblock %}
+{% block page_title %}水质数据详情{% endblock %}
+{% block page_desc %}实时水质监测数据查询与分析{% endblock %}
+
+{% block content %}
+<!-- 滩涂选择 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-map-marker-alt text-blue-500 text-xl"></i>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1">选择滩涂</label>
+                <select id="flat-select" onchange="changeFlat()" class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 min-w-[200px]">
+                    {% for flat in flats %}
+                    <option value="{{ flat.id }}" {% if selected_flat and selected_flat.id == flat.id %}selected{% endif %}>{{ flat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+            <i class="fas fa-database"></i>
+            <span>共 {{ quality_records|length }} 条记录</span>
+        </div>
+    </div>
+</div>
+
+<!-- 最新数据统计卡片 -->
+{% if quality_records %}
+{% set latest = quality_records[0] %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">最新水温</p>
+                <p class="text-3xl font-bold mt-1">{{ latest.temperature }}<span class="text-sm opacity-75">℃</span></p>
+                <p class="text-xs opacity-75 mt-1">{{ latest.timestamp.strftime('%m-%d %H:%M') if latest.timestamp else '' }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-temperature-half text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">最新盐度</p>
+                <p class="text-3xl font-bold mt-1">{{ latest.salinity }}<span class="text-sm opacity-75">‰</span></p>
+                <p class="text-xs opacity-75 mt-1">{{ latest.timestamp.strftime('%m-%d %H:%M') if latest.timestamp else '' }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-tint text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">最新溶氧</p>
+                <p class="text-3xl font-bold mt-1">{{ latest.dissolved_oxygen }}<span class="text-sm opacity-75">mg/L</span></p>
+                <p class="text-xs opacity-75 mt-1">{{ latest.timestamp.strftime('%m-%d %H:%M') if latest.timestamp else '' }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-wind text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">最新 pH</p>
+                <p class="text-3xl font-bold mt-1">{{ latest.ph }}</p>
+                <p class="text-xs opacity-75 mt-1">{{ latest.timestamp.strftime('%m-%d %H:%M') if latest.timestamp else '' }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-flask text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 水质数据表格 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-800">
+            <i class="fas fa-table text-blue-500 mr-2"></i>
+            {% if selected_flat %}{{ selected_flat.name }}{% else %}水质{% endif %}监测记录
+        </h3>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">监测时间</th>
+                    <th class="px-6 py-3">水温 (℃)</th>
+                    <th class="px-6 py-3">盐度 (‰)</th>
+                    <th class="px-6 py-3">溶解氧 (mg/L)</th>
+                    <th class="px-6 py-3">pH值</th>
+                    <th class="px-6 py-3">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in quality_records %}
+                {% set qs = r.get_quality_status() %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-3 text-sm text-slate-600">{{ r.timestamp.strftime('%Y-%m-%d %H:%M') if r.timestamp else '-' }}</td>
+                    <td class="px-6 py-3 text-slate-800">{{ r.temperature if r.temperature is not none else '-' }}</td>
+                    <td class="px-6 py-3 text-slate-800">{{ r.salinity if r.salinity is not none else '-' }}</td>
+                    <td class="px-6 py-3 text-slate-800">{{ r.dissolved_oxygen if r.dissolved_oxygen is not none else '-' }}</td>
+                    <td class="px-6 py-3 text-slate-800">{{ r.ph if r.ph is not none else '-' }}</td>
+                    <td class="px-6 py-3">
+                        {% if qs.status == 'normal' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-1"></span>正常
+                            </span>
+                        {% elif qs.status == 'warning' %}
+                            <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs" title="{{ qs.issues|join(', ') }}">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 inline-block mr-1"></span>预警
+                            </span>
+                            <p class="text-xs text-amber-600 mt-1">{{ qs.issues|join('、') }}</p>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs" title="{{ qs.issues|join(', ') }}">
+                                <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span>异常
+                            </span>
+                            <p class="text-xs text-red-600 mt-1">{{ qs.issues|join('、') }}</p>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not quality_records %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        {% if selected_flat %}该滩涂暂无水质数据{% else %}请先选择滩涂{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 正常范围参考 -->
+<div class="bg-blue-50 rounded-xl p-6 mt-6">
+    <h4 class="font-medium text-blue-800 mb-3"><i class="fas fa-info-circle mr-2"></i>寒地贝类水质正常范围参考</h4>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div class="bg-white p-3 rounded-lg">
+            <p class="text-slate-500 text-xs">水温</p>
+            <p class="font-medium text-slate-800 mt-1">-1 ~ 20 ℃</p>
+        </div>
+        <div class="bg-white p-3 rounded-lg">
+            <p class="text-slate-500 text-xs">盐度</p>
+            <p class="font-medium text-slate-800 mt-1">25 ~ 38 ‰</p>
+        </div>
+        <div class="bg-white p-3 rounded-lg">
+            <p class="text-slate-500 text-xs">溶解氧</p>
+            <p class="font-medium text-slate-800 mt-1">4 ~ 8 mg/L</p>
+        </div>
+        <div class="bg-white p-3 rounded-lg">
+            <p class="text-slate-500 text-xs">pH值</p>
+            <p class="font-medium text-slate-800 mt-1">7.5 ~ 8.5</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function changeFlat() {
+        const flatId = document.getElementById('flat-select').value;
+        if (flatId) {
+            window.location.href = '{{ url_for("water_quality.quality_data") }}?flat_id=' + flatId;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}AI生态评估 - 滩智溯{% endblock %}
+{% block page_title %}AI生态评估{% endblock %}
+{% block page_desc %}依托《数据智能体综合应用平台V1.0》软著 · 海域生态承载力+全域灾害预警{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-6 text-white mb-6 shadow-lg">
+    <div class="flex items-center gap-6">
+        <div class="flex-shrink-0 w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center"><i class="fas fa-robot text-white text-4xl"></i></div>
+        <div class="flex-1">
+            <h3 class="text-xl font-bold">生态承载力 + 灾害预警智能体</h3>
+            <p class="text-sm opacity-90 mt-1">分析12处滩涂养殖密度、水质，评估海域生态压力；全域分级推送灾害预警</p>
+            <div class="flex gap-4 mt-2 text-xs">
+                <span class="bg-white/20 px-2 py-1 rounded">国家版权局软著登记</span>
+                <span class="bg-white/20 px-2 py-1 rounded">监测滩涂 {{ flats|length }} 处</span>
+                <span class="bg-white/20 px-2 py-1 rounded">气象预警 {{ weather_warnings|length }} 条</span>
+                <span id="agent-status-badge" class="px-2 py-1 rounded {% if agent_online %}bg-green-400/30{% else %}bg-red-400/30{% endif %}">
+                    <i class="fas {% if agent_online %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>平台{% if agent_online %}在线{% else %}离线{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 生态承载力评估 -->
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-globe text-green-500 mr-2"></i>生态承载力评估</h3>
+            <button onclick="ecoAssess()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium"><i class="fas fa-magnifying-glass mr-1"></i>评估海域生态</button>
+        </div>
+        <div id="eco-result" class="p-4 text-sm">
+            <div class="text-center py-8 text-slate-400"><i class="fas fa-leaf text-4xl mb-2 opacity-40"></i><p>启动生态承载力智能Agent评估海域生态压力</p></div>
+        </div>
+    </div>
+
+    <!-- 灾害预警 -->
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-triangle-exclamation text-red-500 mr-2"></i>全域灾害预警</h3>
+            <button onclick="disasterWarn()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium"><i class="fas fa-bell mr-1"></i>融合研判预警</button>
+        </div>
+        <div id="disaster-result" class="p-4 text-sm">
+            <div class="text-center py-8 text-slate-400"><i class="fas fa-satellite-dish text-4xl mb-2 opacity-40"></i><p>启动灾害预警智能体进行多源融合研判</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- 全域滩涂密度+水质一览 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-4 border-b"><h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-table text-slate-500 mr-2"></i>全域滩涂养殖密度与水质</h3></div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="px-4 py-3 text-left">滩涂</th>
+                    <th class="px-4 py-3 text-left">养殖户</th>
+                    <th class="px-4 py-3 text-left">面积(亩)</th>
+                    <th class="px-4 py-3 text-left">累计投苗(kg)</th>
+                    <th class="px-4 py-3 text-left">密度(kg/亩)</th>
+                    <th class="px-4 py-3 text-left">水温(℃)</th>
+                    <th class="px-4 py-3 text-left">溶氧(mg/L)</th>
+                    <th class="px-4 py-3 text-left">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in flats %}
+                {% set density = (f.seed_quantity / f.area) if f.area else 0 %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-800">{{ f.name }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.farmer }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.area }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ '%.0f'|format(f.seed_quantity) }}</td>
+                    <td class="px-4 py-3 {% if density > 80 %}text-red-600 font-medium{% elif density > 50 %}text-amber-600{% else %}text-green-600{% endif %}">{{ '%.1f'|format(density) }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.temperature }}</td>
+                    <td class="px-4 py-3 {% if f.oxygen < 5 %}text-red-600 font-medium{% else %}text-slate-600{% endif %}">{{ f.oxygen }}</td>
+                    <td class="px-4 py-3">
+                        {% if f.status == 'danger' %}<span class="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded">危险</span>
+                        {% elif f.status == 'warning' %}<span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded">预警</span>
+                        {% else %}<span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">正常</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function ecoAssess() {
+    const box = document.getElementById('eco-result');
+    box.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-green-400 mb-2"></i><p class="text-sm text-slate-500">生态承载力智能Agent评估中...</p></div>';
+    fetch('/ai/api/ecological', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})
+    .then(r => r.json()).then(data => {
+        if (data.success) {
+            const r = data.ai_reply;
+            const colorMap = {'green':'green','blue':'blue','orange':'amber','red':'red'};
+            const c = colorMap[r['等级颜色']] || 'slate';
+            box.innerHTML = `
+                <div class="bg-${c}-50 border border-${c}-200 rounded-lg p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-lg font-bold text-${c}-600">${r['生态压力等级']}</span>
+                        <div class="text-right"><div class="text-2xl font-bold text-${c}-600">${r['生态承载力指数']}</div><div class="text-xs text-slate-500">承载力指数</div></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white rounded p-2"><div class="text-lg font-bold text-slate-800">${r['评估海域滩涂数']}</div><div class="text-xs text-slate-500">滩涂</div></div>
+                        <div class="bg-white rounded p-2"><div class="text-lg font-bold text-amber-600">${r['密度过载滩涂数']}</div><div class="text-xs text-slate-500">过载</div></div>
+                        <div class="bg-white rounded p-2"><div class="text-lg font-bold text-red-600">${r['水质异常滩涂数']}</div><div class="text-xs text-slate-500">水质异常</div></div>
+                    </div>
+                    <div><span class="text-slate-500 font-medium">评估结论:</span><br><span class="text-slate-700">${r['评估结论']}</span></div>
+                    <div><span class="text-slate-500 font-medium">管理建议:</span><ul class="list-disc list-inside text-slate-700">${(r['管理建议']||[]).map(a=>`<li>${a}</li>`).join('')}</ul></div>
+                    <div class="text-xs text-slate-400 text-right border-t border-${c}-200 pt-2">${r['署名']}</div>
+                </div>`;
+        } else { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ ' + (data.message||'评估失败') + '</div>'; }
+    }).catch(() => { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ 网络异常</div>'; });
+}
+
+function disasterWarn() {
+    const box = document.getElementById('disaster-result');
+    box.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-red-400 mb-2"></i><p class="text-sm text-slate-500">灾害预警智能体融合研判中...</p></div>';
+    fetch('/ai/api/disaster-warning', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})
+    .then(r => r.json()).then(data => {
+        if (data.success) {
+            const r = data.ai_reply;
+            box.innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between"><span class="font-bold text-red-600">🔴 红色紧急</span><span class="text-xs text-slate-500">${r['推送时间']}</span></div>
+                        <div class="text-sm text-slate-700 mt-1">${(r['红色紧急']||[]).join('、')}</div>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div class="font-bold text-amber-600">🟠 橙色风险</div>
+                        <div class="text-sm text-slate-700 mt-1">${(r['橙色风险']||[]).join('、')}</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="font-bold text-blue-600">🔵 蓝色提醒</div>
+                        <div class="text-sm text-slate-700 mt-1">${(r['蓝色提醒']||[]).join('、')}</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-3">
+                        <div class="text-sm"><span class="font-medium text-slate-600">总体态势:</span> <span class="text-slate-800">${r['总体态势']}</span></div>
+                        <div class="text-sm mt-1"><span class="font-medium text-slate-600">处置建议:</span><ul class="list-disc list-inside text-slate-700">${(r['处置建议']||[]).map(a=>`<li>${a}</li>`).join('')}</ul></div>
+                        <div class="text-xs text-slate-400 mt-1">融合气象预警 ${r['融合气象预警数']} 条</div>
+                    </div>
+                </div>`;
+        } else { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ ' + (data.message||'研判失败') + '</div>'; }
+    }).catch(() => { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ 网络异常</div>'; });
+}
+</script>
+{% endblock %}

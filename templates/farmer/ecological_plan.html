@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}生态轮休规划 - 滩智溯{% endblock %}
+{% block page_title %}滩涂生态轮休规划{% endblock %}
+{% block page_desc %}三年两养一休，保护海洋生态资源{% endblock %}
+
+{% block content %}
+<!-- 政策说明 -->
+<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white mb-6">
+    <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-leaf text-3xl"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold">辽宁省"三年两养一休"政策</h2>
+            <p class="opacity-80 mt-1">为保护海洋生态环境，实现可持续发展，滩涂养殖实行三年两养一休制度</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mt-6">
+        <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-2xl font-bold">第1年</p>
+            <p class="text-sm opacity-75 mt-1">养殖期</p>
+        </div>
+        <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-2xl font-bold">第2年</p>
+            <p class="text-sm opacity-75 mt-1">养殖期</p>
+        </div>
+        <div class="bg-white/10 rounded-lg p-4">
+            <p class="text-2xl font-bold">第3年</p>
+            <p class="text-sm opacity-75 mt-1">生态修复期</p>
+        </div>
+    </div>
+</div>
+
+<!-- 轮休规划 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for flat in flats %}
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="font-semibold text-slate-800">{{ flat.name }}</h3>
+                <p class="text-sm text-slate-500">面积：{{ flat.area }} 亩</p>
+            </div>
+            {% set current_year = 2026 %}
+            {% set phase_index = (current_year % 3) %}
+            {% if phase_index == 0 %}
+                <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">生态修复期</span>
+            {% else %}
+                <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm">养殖期</span>
+            {% endif %}
+        </div>
+        
+        {% set plan = plans | selectattr('flat_id', 'equalto', flat.id) | list | first %}
+        
+        {% if plan %}
+        <div class="bg-slate-50 rounded-lg p-4">
+            <h4 class="font-medium text-slate-700 mb-2">{{ plan.plan_notes }}</h4>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <p><span class="text-slate-500">起止时间：</span>{{ plan.start_date.strftime('%Y-%m-%d') }} ~ {{ plan.end_date.strftime('%Y-%m-%d') }}</p>
+                <p><span class="text-slate-500">当前周期：</span>{{ plan.plan_year }}年</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-amber-50 rounded-lg p-4">
+            <p class="text-sm text-amber-700">暂无规划，系统将根据政策自动生成</p>
+        </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <h5 class="text-sm font-medium text-slate-600 mb-2">未来三年规划</h5>
+            <div class="flex gap-2">
+                {% for year_offset in range(3) %}
+                    {% set year = 2026 + year_offset %}
+                    {% set phase = '养殖' if (year % 3) != 0 else '修复' %}
+                    <div class="flex-1 text-center p-2 rounded-lg {% if phase == '养殖' %}bg-blue-50 text-blue-700{% else %}bg-green-50 text-green-700{% endif %}">
+                        <p class="text-xs">{{ year }}年</p>
+                        <p class="text-sm font-medium">{{ phase }}期</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 轮休好处 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-leaf text-green-500 mr-2"></i>生态轮休好处</h3>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 rounded-lg bg-green-50">
+            <i class="fas fa-recycle text-3xl text-green-500 mb-2"></i>
+            <h4 class="font-medium text-slate-800 mb-1">海域自净</h4>
+            <p class="text-sm text-slate-600">让海水有足够时间自净，恢复生态平衡</p>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-blue-50">
+            <i class="fas fa-fish text-3xl text-blue-500 mb-2"></i>
+            <h4 class="font-medium text-slate-800 mb-1">资源恢复</h4>
+            <p class="text-sm text-slate-600">促进底栖生物恢复，增加天然饵料</p>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-amber-50">
+            <i class="fas fa-chart-line text-3xl text-amber-500 mb-2"></i>
+            <h4 class="font-medium text-slate-800 mb-1">提质增收</h4>
+            <p class="text-sm text-slate-600">生态恢复后贝类品质和产量显著提升</p>
+        </div>
+        <div class="text-center p-4 rounded-lg bg-purple-50">
+            <i class="fas fa-hand-holding-usd text-3xl text-purple-500 mb-2"></i>
+            <h4 class="font-medium text-slate-800 mb-1">政策补贴</h4>
+            <p class="text-sm text-slate-600">轮休期间可申请政府生态修复补贴</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

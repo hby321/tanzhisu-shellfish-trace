@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}农技知识库 - 滩智溯{% endblock %}
+{% block page_title %}农技知识库{% endblock %}
+{% block page_desc %}寒地贝类养殖技术与最佳实践{% endblock %}
+
+{% block content %}
+<!-- 顶部说明 -->
+<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white mb-6">
+    <div class="flex items-start justify-between">
+        <div>
+            <h3 class="text-lg font-semibold"><i class="fas fa-graduation-cap mr-2"></i>寒地贝类养殖知识库</h3>
+            <p class="text-sm opacity-80 mt-2">汇集苗种、水质、病害、生态等核心知识，助力科学养殖</p>
+        </div>
+        <div class="text-right">
+            <p class="text-3xl font-bold">{{ knowledge_data|map(attribute='articles')|map('length')|sum }}</p>
+            <p class="text-xs opacity-80">篇知识文章</p>
+        </div>
+    </div>
+</div>
+
+<!-- 分类筛选 -->
+<div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+    <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-sm text-slate-500 mr-2"><i class="fas fa-filter mr-1"></i>分类：</span>
+        <button onclick="filterCategory('all', this)" class="category-btn px-3 py-1.5 rounded-full text-sm bg-blue-500 text-white">全部</button>
+        {% for cat in knowledge_data %}
+        <button onclick="filterCategory('{{ cat.category }}', this)" class="category-btn px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+            {{ cat.category }}
+        </button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 知识分类区块 -->
+<div class="space-y-6">
+
+<!-- 特色养殖图鉴 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-images text-green-500 mr-2"></i>特色养殖品种图鉴</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="h-40 bg-gradient-to-br from-amber-400 via-orange-400 to-red-400 flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 opacity-30">
+                    <div class="absolute top-4 left-4 w-16 h-16 rounded-full bg-white blur-sm"></div>
+                    <div class="absolute bottom-4 right-8 w-20 h-20 rounded-full bg-white blur-sm"></div>
+                </div>
+                <i class="fas fa-shell-fish text-white text-7xl relative z-10"></i>
+            </div>
+            <div class="p-4">
+                <h4 class="font-medium text-slate-800">大连湾牡蛎</h4>
+                <p class="text-xs text-slate-500 mt-1">辽宁沿海主要养殖品种，肉质鲜美</p>
+                <div class="flex items-center gap-2 mt-2 text-xs">
+                    <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded">耐寒</span>
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded">高产量</span>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="h-40 bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-500 flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 opacity-30">
+                    <div class="absolute top-6 right-6 w-14 h-14 rounded-full bg-white blur-sm"></div>
+                    <div class="absolute bottom-6 left-4 w-24 h-24 rounded-full bg-white blur-sm"></div>
+                </div>
+                <i class="fas fa-fish text-white text-7xl relative z-10"></i>
+            </div>
+            <div class="p-4">
+                <h4 class="font-medium text-slate-800">虾夷扇贝</h4>
+                <p class="text-xs text-slate-500 mt-1">冷水性贝类，辽东半岛特色养殖</p>
+                <div class="flex items-center gap-2 mt-2 text-xs">
+                    <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded">高经济价值</span>
+                    <span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded">需精细化管理</span>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl overflow-hidden shadow-sm border border-slate-100">
+            <div class="h-40 bg-gradient-to-br from-green-400 via-emerald-400 to-teal-400 flex items-center justify-center relative overflow-hidden">
+                <div class="absolute inset-0 opacity-30">
+                    <div class="absolute top-2 right-4 w-20 h-20 rounded-full bg-white blur-sm"></div>
+                    <div class="absolute bottom-2 left-8 w-16 h-16 rounded-full bg-white blur-sm"></div>
+                </div>
+                <i class="fas fa-shrimp text-white text-7xl relative z-10"></i>
+            </div>
+            <div class="p-4">
+                <h4 class="font-medium text-slate-800">菲律宾蛤仔</h4>
+                <p class="text-xs text-slate-500 mt-1">滩涂养殖主要品种，适应性强</p>
+                <div class="flex items-center gap-2 mt-2 text-xs">
+                    <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded">耐粗放</span>
+                    <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded">市场需求大</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    {% for cat in knowledge_data %}
+    <div class="category-block bg-white rounded-xl shadow-sm overflow-hidden" data-category="{{ cat.category }}">
+        <div class="px-6 py-4 border-b bg-slate-50 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-folder-open text-green-500"></i>{{ cat.category }}
+                <span class="text-xs text-slate-500 font-normal">（{{ cat.articles|length }} 篇）</span>
+            </h3>
+            <button onclick="toggleCategory(this)" class="text-slate-400 hover:text-slate-600 text-sm">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 category-content">
+            {% for article in cat.articles %}
+            <div class="border border-slate-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer" onclick="toggleArticle(this)">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-book-open text-green-600"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-slate-800">{{ article.title }}</h4>
+                        <div class="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                            <span><i class="fas fa-user-edit mr-1"></i>{{ article.author }}</span>
+                            <span><i class="fas fa-eye mr-1"></i>{{ article.views }}</span>
+                            {% if article.is_featured %}<span class="text-amber-500"><i class="fas fa-star"></i>精选</span>{% endif %}
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1 article-summary">{{ article.summary }}</p>
+                        <div class="article-detail hidden mt-3 pt-3 border-t border-slate-100">
+                            <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ article.content }}</div>
+                        </div>
+                        <span class="text-xs text-blue-500 mt-2 inline-block expand-hint">
+                            <i class="fas fa-chevron-down mr-1"></i>点击展开详情
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not cat.articles %}
+            <div class="md:col-span-3 text-center py-6 text-slate-400 text-sm">暂无文章</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not knowledge_data %}
+    <div class="bg-white rounded-xl p-12 text-center shadow-sm">
+        <i class="fas fa-book text-6xl text-slate-300 mb-4"></i>
+        <p class="text-slate-500">知识库正在建设中，敬请期待</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 学习提示 -->
+<div class="bg-blue-50 rounded-xl p-6 mt-6">
+    <h4 class="font-medium text-blue-800 mb-2"><i class="fas fa-lightbulb mr-2"></i>学习提示</h4>
+    <ul class="text-sm text-slate-600 space-y-1">
+        <li>• 知识库内容结合辽宁沿海寒地养殖实际整理</li>
+        <li>• 建议结合自身滩涂情况灵活应用</li>
+        <li>• 如遇疑难问题，可联系合作社技术员或专家在线咨询</li>
+        <li>• 知识库持续更新，请定期查看新内容</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleArticle(card) {
+        const summary = card.querySelector('.article-summary');
+        const detail = card.querySelector('.article-detail');
+        const hint = card.querySelector('.expand-hint');
+        if (detail.classList.contains('hidden')) {
+            detail.classList.remove('hidden');
+            summary.classList.add('hidden');
+            hint.innerHTML = '<i class="fas fa-chevron-up mr-1"></i>点击收起';
+        } else {
+            detail.classList.add('hidden');
+            summary.classList.remove('hidden');
+            hint.innerHTML = '<i class="fas fa-chevron-down mr-1"></i>点击展开详情';
+        }
+    }
+
+    function toggleCategory(btn) {
+        const block = btn.closest('.category-block');
+        const content = block.querySelector('.category-content');
+        const icon = btn.querySelector('i');
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            content.classList.add('hidden');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    }
+
+    function filterCategory(category, btn) {
+        document.querySelectorAll('.category-btn').forEach(b => {
+            b.classList.remove('bg-blue-500', 'text-white');
+            b.classList.add('bg-slate-100', 'text-slate-700');
+        });
+        btn.classList.add('bg-blue-500', 'text-white');
+        btn.classList.remove('bg-slate-100', 'text-slate-700');
+
+        document.querySelectorAll('.category-block').forEach(block => {
+            if (category === 'all' || block.dataset.category === category) {
+                block.classList.remove('hidden');
+            } else {
+                block.classList.add('hidden');
+            }
+        });
+    }
+</script>
+{% endblock %}

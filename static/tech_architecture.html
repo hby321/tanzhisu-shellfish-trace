@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滩智溯 - 技术架构图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 1.8em;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1a73e8;
+        }
+        .diagram-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            overflow-x: auto;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .tech-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .tech-card h3 {
+            color: #1a73e8;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+        .tech-card ul {
+            list-style: none;
+            text-align: left;
+        }
+        .tech-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 0.95em;
+        }
+        .tech-card li:last-child {
+            border-bottom: none;
+        }
+        .tech-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        .flow-item {
+            background: white;
+            border: 2px solid #1a73e8;
+            border-radius: 10px;
+            padding: 15px 20px;
+            font-weight: bold;
+            color: #1a73e8;
+            min-width: 120px;
+            text-align: center;
+        }
+        .flow-arrow {
+            font-size: 2em;
+            color: #1a73e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 滩智溯 - 技术架构图</h1>
+            <p>辽宁寒地滩涂贝类全链路智慧养殖与区块链溯源一体化平台</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-title">🏗️ 系统总体架构</div>
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    subgraph 用户层
+        direction LR
+        U1["🌾 农户端<br/>Web Browser"]
+        U2["🏢 合作社端<br/>Web Browser"]
+        U3["🏭 企业端<br/>Web Browser"]
+        U4["🏛️ 监管端<br/>Web Browser"]
+        U5["📱 小程序端<br/>Taro 4.x"]
+    end
+
+    subgraph 应用服务层
+        direction TB
+        A1["Flask 3.0<br/>主后端服务 :5000"]
+        A2["模板引擎<br/>Jinja2"]
+        A3["路由系统<br/>Blueprint"]
+        A4["认证系统<br/>Flask-Login"]
+    end
+
+    subgraph AI智能体层
+        direction TB
+        AI1["软著: 数据智能体<br/>综合应用平台 V1.0"]
+        AI2["独立服务<br/>agent_server.py :8090"]
+        AI3["AI调度中心<br/>/agent/run"]
+        AI4["9大智能体<br/>病害识别/养殖顾问<br/>产量预测/集群研判<br/>溯源核验/生态评估<br/>灾害预警/风险分析<br/>周报生成/产销匹配"]
+    end
+
+    subgraph 数据服务层
+        direction TB
+        D1["SQLite 数据库"]
+        D2["数据模型<br/>SQLAlchemy"]
+        D3["区块链存证<br/>Hash生成"]
+        D4["外部API<br/>高德地图/和风天气"]
+    end
+
+    subgraph 大模型层
+        direction TB
+        L1["DeepSeek<br/>大模型 API"]
+        L2["LLM调用<br/>llm_chat()"]
+        L3["本地知识库<br/>降级方案"]
+    end
+
+    U1 & U2 & U3 & U4 --> A1
+    U5 --> A1
+    A1 --> A2 & A3 & A4
+    A3 -->|"HTTP请求<br/>agent_client.py"| AI1
+    AI1 --> AI2 --> AI3 --> AI4
+    AI4 -->|"大模型推理"| L1
+    L1 --> L2
+    L3 -->|"降级"| AI4
+    A1 --> D1 & D3
+    AI1 --> D1
+    A1 --> D4
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📊 五端功能架构</div>
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph LR
+    subgraph 农户端
+        F1["数据总览"]
+        F2["水质可视化"]
+        F3["AI养殖顾问"]
+        F4["AI产量预测"]
+        F5["溯源生成"]
+    end
+
+    subgraph 合作社端
+        C1["社员管理"]
+        C2["统一溯源"]
+        C3["AI集群研判"]
+        C4["产销对接"]
+        C5["硬件设备"]
+    end
+
+    subgraph 企业端
+        E1["溯源核验"]
+        E2["批量核验"]
+        E3["数据报表"]
+        E4["采购管理"]
+        E5["AI溯源核验"]
+    end
+
+    subgraph 监管端
+        R1["全域监测"]
+        R2["灾害预警"]
+        R3["AI生态评估"]
+        R4["禁养区监测"]
+        R5["养殖密度"]
+    end
+
+    subgraph 移动端
+        M1["专家问诊"]
+        M2["病害识别"]
+        M3["养殖台账"]
+        M4["溯源查询"]
+        M5["气象预警"]
+    end
+
+    F3 & F4 -->|"软著AI"| AI[🤖 数据智能体平台]
+    C3 -->|"软著AI"| AI
+    E5 -->|"软著AI"| AI
+    R2 & R3 -->|"软著AI"| AI
+    M1 & M2 -->|"软著AI"| AI
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🔄 AI智能体调用流程</div>
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    subgraph 前端请求
+        A[用户点击AI功能] --> B[前端发送请求]
+        B --> C["POST /agent/run<br/>agent=xxx&params=xxx"]
+    end
+
+    subgraph 主后端转发
+        C --> D["agent_client.py"]
+        D -->|"HTTP POST"| E["软著平台 :8090"]
+        D -->|"超时45s"| F{请求超时?}
+        F -->|"是"| G[本地降级方案]
+        F -->|"否"| H[等待响应]
+    end
+
+    subgraph 智能体执行
+        E --> I["agent_server.py"]
+        I --> J{"智能体分发"}
+        J -->|"disease_detect"| K[病害识别智能体]
+        J -->|"advisor_consult"| L[养殖顾问智能体]
+        J -->|"predict_yield"| M[产量预测智能体]
+        J -->|"risk_analysis"| N[风险分析智能体]
+        J -->|"ecology_evaluate"| O[生态评估智能体]
+        K & L & M & N & O --> P{LLM可用?}
+        P -->|"是"| Q["调用DeepSeek<br/>llm_chat()"]
+        P -->|"否"| R[本地知识库匹配]
+        Q & R --> S[返回结果]
+    end
+
+    subgraph 结果返回
+        S --> T["JSON响应"]
+        T --> U[主后端接收]
+        U --> V[返回前端]
+    end
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🛠️ 技术栈详情</div>
+                <div class="tech-stack">
+                    <div class="tech-card">
+                        <div class="icon">🖥️</div>
+                        <h3>后端框架</h3>
+                        <ul>
+                            <li>Python 3.x</li>
+                            <li>Flask 3.0.0</li>
+                            <li>Flask-SQLAlchemy 3.1.1</li>
+                            <li>Flask-Login 0.6.3</li>
+                            <li>Flask-CORS 4.0.0</li>
+                            <li>Werkzeug 3.0.1</li>
+                        </ul>
+                    </div>
+                    <div class="tech-card">
+                        <div class="icon">🤖</div>
+                        <h3>AI智能体</h3>
+                        <ul>
+                            <li>独立 Flask 服务</li>
+                            <li>DeepSeek 大模型</li>
+                            <li>llm_chat() 封装</li>
+                            <li>9大智能体调度</li>
+                            <li>本地知识库降级</li>
+                            <li>软著 V1.0 知识产权</li>
+                        </ul>
+                    </div>
+                    <div class="tech-card">
+                        <div class="icon">🌐</div>
+                        <h3>前端技术</h3>
+                        <ul>
+                            <li>HTML5 / CSS3</li>
+                            <li>JavaScript (ES6+)</li>
+                            <li>Jinja2 模板引擎</li>
+                            <li>ECharts 数据可视化</li>
+                            <li>Leaflet 地图</li>
+                            <li>高德地图瓦片</li>
+                        </ul>
+                    </div>
+                    <div class="tech-card">
+                        <div class="icon">📱</div>
+                        <h3>移动端</h3>
+                        <ul>
+                            <li>Taro 4.1.9</li>
+                            <li>React 18</li>
+                            <li>TypeScript 5</li>
+                            <li>Zustand 状态管理</li>
+                            <li>Sass CSS</li>
+                            <li>多端适配</li>
+                        </ul>
+                    </div>
+                    <div class="tech-card">
+                        <div class="icon">💾</div>
+                        <h3>数据存储</h3>
+                        <ul>
+                            <li>SQLite 数据库</li>
+                            <li>SQLAlchemy ORM</li>
+                            <li>Hash 区块链存证</li>
+                            <li>数据模型分离</li>
+                            <li>实时数据采集</li>
+                            <li>历史数据存档</li>
+                        </ul>
+                    </div>
+                    <div class="tech-card">
+                        <div class="icon">🔌</div>
+                        <h3>外部接口</h3>
+                        <ul>
+                            <li>高德地图 API</li>
+                            <li>和风天气 API</li>
+                            <li>HTTP Client</li>
+                            <li>JSON 数据格式</li>
+                            <li>超时重试机制</li>
+                            <li>错误降级处理</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📁 项目目录结构</div>
+                <div class="diagram-container">
+                    <pre style="text-align: left; font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.8; color: #333;">
+平台/
+├── app.py                    # Flask主应用入口
+├── agent_server.py           # 软著AI智能体服务
+├── ai_config.json            # AI配置文件
+├── qweather_config.json      # 天气API配置
+├── start.bat                 # 一键启动脚本
+├── requirements.txt          # Python依赖
+├── services/
+│   └── agent_client.py       # AI请求转发客户端
+├── routes/
+│   ├── enterprise.py         # 企业端路由
+│   ├── coop.py               # 合作社端路由
+│   ├── farmer.py             # 农户端路由
+│   ├── regulator.py          # 监管端路由
+│   └── routes.py             # AI路由
+├── templates/
+│   ├── base.html             # 基础模板
+│   ├── enterprise/           # 企业端模板
+│   ├── coop/                 # 合作社端模板
+│   ├── farmer/               # 农户端模板
+│   ├── regulator/            # 监管端模板
+│   ├── water_quality/        # 水质可视化
+│   └──/                      # AI功能页面
+├── src/                      # 小程序源码
+│   ├── pages/                # 小程序页面
+│   │   ├── expert/           # 专家问诊
+│   │   ├── disease/          # 病害识别
+│   │   └── ...               # 其他页面
+│   └── utils/                # 工具函数
+└── instance/
+    └── tanzhisu.db           # SQLite数据库
+                    </pre>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🔗 核心技术特性</div>
+                <div class="flow">
+                    <div class="flow-item">微服务架构<br/>主后端 + AI独立部署</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">软著知识产权<br/>AI代码集中管理</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">大模型集成<br/>DeepSeek API</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">本地降级<br/>知识库兜底</div>
+                </div>
+                <div class="flow" style="margin-top: 20px;">
+                    <div class="flow-item">五端协同<br/>数据互通</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">区块链存证<br/>溯源可信</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">实时监测<br/>AI预警</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">跨设备部署<br/>一键启动</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 15
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}添加设备 - 滩智溯{% endblock %}
+{% block page_title %}添加硬件设备{% endblock %}
+{% block page_desc %}绑定低温传感设备到指定滩涂{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-6">
+            <i class="fas fa-microchip text-blue-500 mr-2"></i>添加新设备
+        </h3>
+
+        <form id="hardware-form" method="POST" action="{{ request.path }}" class="space-y-5">
+            <div>
+                <label class="block text-sm text-slate-600 mb-1">设备ID *</label>
+                <input type="text" name="device_id" required
+                       class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                       placeholder="如：DD-Sensor-001（设备机身标识）">
+                <p class="text-xs text-slate-400 mt-1"><i class="fas fa-info-circle mr-1"></i>请填写设备机身上印刷的唯一编号</p>
+            </div>
+
+            <div>
+                <label class="block text-sm text-slate-600 mb-1">设备型号 *</label>
+                <select name="model" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="">请选择型号</option>
+                    <option value="DD-AquaPro-1">DD-AquaPro-1（基础款，水温+溶氧）</option>
+                    <option value="DD-AquaPro-2">DD-AquaPro-2（标准款，水温+溶氧+盐度+pH）</option>
+                    <option value="DD-AquaPro-3">DD-AquaPro-3（增强款，全参数+低温耐受）</option>
+                    <option value="DD-PolarMax-1">DD-PolarMax-1（寒地专用，抗冰冻）</option>
+                    <option value="DD-PolarMax-2">DD-PolarMax-2（寒地专用，含卫星通信）</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm text-slate-600 mb-1">关联滩涂 *</label>
+                <select name="flat_id" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="">请选择关联滩涂</option>
+                    {% for flat in flats %}
+                    <option value="{{ flat.id }}">{{ flat.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if not flats %}
+                <p class="text-xs text-red-500 mt-1"><i class="fas fa-exclamation-circle mr-1"></i>暂无可选滩涂，请先创建滩涂</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">固件版本</label>
+                    <input type="text" name="firmware_version"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                           placeholder="如：v1.2.0（可选）">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">初始电量(%)</label>
+                    <input type="number" name="battery_level" min="0" max="100" value="100"
+                           class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t flex items-center justify-between">
+                <a href="{{ url_for('hardware.device_list') }}" class="text-sm text-slate-500 hover:text-slate-700">
+                    <i class="fas fa-arrow-left mr-1"></i>返回设备列表
+                </a>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('hardware.device_list') }}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition text-sm">
+                        取消
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                        <i class="fas fa-check mr-1"></i>添加设备
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 设备型号说明 -->
+    <div class="bg-blue-50 rounded-xl p-6 mt-6">
+        <h4 class="font-medium text-blue-800 mb-3"><i class="fas fa-info-circle mr-2"></i>设备型号说明</h4>
+        <div class="space-y-2 text-sm text-slate-600">
+            <div class="flex items-start gap-2">
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium flex-shrink-0">DD-AquaPro-1</span>
+                <span>基础款，监测水温与溶解氧，适用于常规池塘</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium flex-shrink-0">DD-AquaPro-2</span>
+                <span>标准款，包含水温、溶解氧、盐度、pH四项监测</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium flex-shrink-0">DD-AquaPro-3</span>
+                <span>增强款，全参数监测，低温耐受设计</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium flex-shrink-0">DD-PolarMax-1</span>
+                <span>寒地专用，抗冰冻外壳，可在-30℃环境运行</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium flex-shrink-0">DD-PolarMax-2</span>
+                <span>寒地专用+卫星通信，适用于偏远海域</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const hardwareForm = document.getElementById('hardware-form');
+    if (hardwareForm) {
+        hardwareForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type=submit]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>添加中...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('设备添加成功！');
+                    if (data.message) {
+                        window.location.href = "{{ url_for('hardware.device_list') }}";
+                    }
+                } else {
+                    alert('添加失败：' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>添加设备';
+                }
+            })
+            .catch(err => {
+                alert('网络错误，请重试');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>添加设备';
+            });
+        });
+    }
+</script>
+{% endblock %}

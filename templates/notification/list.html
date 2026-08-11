@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}全部消息 - 滩智溯{% endblock %}
+{% block page_title %}全部消息列表{% endblock %}
+{% block page_desc %}查看所有历史消息通知{% endblock %}
+
+{% block content %}
+<!-- 筛选条件 -->
+<div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+    <form method="GET" class="flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-600">消息类型：</label>
+            <select name="type" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option value="">全部类型</option>
+                <option value="alert" {% if notify_type == 'alert' %}selected{% endif %}>灾害预警</option>
+                <option value="trace" {% if notify_type == 'trace' %}selected{% endif %}>溯源通知</option>
+                <option value="trade" {% if notify_type == 'trade' %}selected{% endif %}>产销交易</option>
+                <option value="enterprise" {% if notify_type == 'enterprise' %}selected{% endif %}>企业通知</option>
+                <option value="regulator" {% if notify_type == 'regulator' %}selected{% endif %}>监管通知</option>
+                <option value="system" {% if notify_type == 'system' %}selected{% endif %}>系统消息</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-600">状态：</label>
+            <select name="status" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option value="">全部状态</option>
+                <option value="unread" {% if is_read == 'unread' %}selected{% endif %}>未读</option>
+                <option value="read" {% if is_read == 'read' %}selected{% endif %}>已读</option>
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition">
+            <i class="fas fa-search mr-1"></i>筛选
+        </button>
+        <a href="{{ url_for('notification.list_all') }}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition">
+            重置
+        </a>
+    </form>
+</div>
+
+<!-- 消息列表 -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    {% if notifications.items %}
+    <table class="w-full">
+        <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">消息类型</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">标题</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">内容</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">时间</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">状态</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-slate-600">操作</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for notification in notifications.items %}
+            <tr class="hover:bg-slate-50 {% if not notification.is_read %}bg-blue-50/30{% endif %}">
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-xs 
+                        {% if notification.level == 'danger' %}bg-red-100 text-red-600
+                        {% elif notification.level == 'warning' %}bg-yellow-100 text-yellow-600
+                        {% elif notification.level == 'success' %}bg-green-100 text-green-600
+                        {% else %}bg-blue-100 text-blue-600{% endif %}">
+                        {{ notification.type_name }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        {% if not notification.is_read %}
+                        <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                        {% endif %}
+                        <span class="text-sm text-slate-800">{{ notification.title }}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="text-sm text-slate-600 line-clamp-1">{{ notification.content }}</span>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="text-xs text-slate-500">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</span>
+                </td>
+                <td class="px-4 py-3">
+                    {% if notification.is_read %}
+                    <span class="text-xs text-slate-400">已读</span>
+                    {% else %}
+                    <span class="text-xs text-blue-500 font-medium">未读</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        {% if not notification.is_read %}
+                        <form method="POST" action="{{ url_for('notification.mark_as_read', id=notification.id) }}">
+                            <button type="submit" class="text-blue-500 hover:text-blue-700 text-xs">标记已读</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('notification.delete', id=notification.id) }}" onsubmit="return confirm('确定删除此消息？')">
+                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 分页 -->
+    <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+        <div class="text-sm text-slate-500">
+            第 {{ notifications.page }} / {{ notifications.pages }} 页，共 {{ notifications.total }} 条
+        </div>
+        <div class="flex items-center gap-2">
+            {% if notifications.has_prev %}
+            <a href="?page={{ notifications.prev_num }}&type={{ notify_type }}&status={{ is_read }}" 
+               class="px-3 py-1 border border-slate-200 rounded text-sm hover:bg-slate-50">上一页</a>
+            {% endif %}
+            {% if notifications.has_next %}
+            <a href="?page={{ notifications.next_num }}&type={{ notify_type }}&status={{ is_read }}" 
+               class="px-3 py-1 border border-slate-200 rounded text-sm hover:bg-slate-50">下一页</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <i class="fas fa-inbox text-6xl text-slate-300 mb-4"></i>
+        <p class="text-slate-500">暂无符合条件的消息</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

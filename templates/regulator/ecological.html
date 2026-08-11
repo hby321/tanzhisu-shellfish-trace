@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}生态承载力 - 滩智溯{% endblock %}
+{% block page_title %}海洋生态承载力分析{% endblock %}
+{% block page_desc %}科学评估，生态保护与养殖发展平衡{% endblock %}
+
+{% block content %}
+<!-- 生态压力指数 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">养殖面积</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_area }} 亩</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">设备覆盖</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_devices }} 台</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">氮负荷</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.nitrogen_load }} kg</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">生态压力指数</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.capacity_index }}</p>
+    </div>
+</div>
+
+<!-- 承载力仪表 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">生态承载力评估</h3>
+        <div id="capacity-gauge" style="height: 250px;"></div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">营养盐负荷</h3>
+        <div id="nutrient-chart" style="height: 250px;"></div>
+    </div>
+</div>
+
+<!-- 生态分析详情 -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-seedling text-green-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-medium text-slate-800">养殖规模</h4>
+                <p class="text-sm text-slate-500">总苗种投放</p>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-800">{{ stats.total_seedling }} kg</p>
+        <div class="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-green-500" style="width: {{ [stats.capacity_index * 50, 100]|min }}%"></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">承载力利用率 {{ (stats.capacity_index * 50)|round(0) }}%</p>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-water text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-medium text-slate-800">监测覆盖</h4>
+                <p class="text-sm text-slate-500">设备在线率</p>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-800">{{ stats.total_devices }} 台</p>
+        <div class="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-500" style="width: 85%"></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">建议覆盖率 85%</p>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-leaf text-amber-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-medium text-slate-800">生态修复</h4>
+                <p class="text-sm text-slate-500">轮休规划</p>
+            </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-800">{{ stats.rest_plans_count }} 个</p>
+        <div class="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-amber-500" style="width: {{ [stats.rest_plans_count * 10, 100]|min }}%"></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">建议至少20%滩涂轮休</p>
+    </div>
+</div>
+
+<!-- 优化建议 -->
+{% if suggestions %}
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">
+        <i class="fas fa-lightbulb text-amber-500 mr-2"></i>生态优化建议
+    </h3>
+    <div class="space-y-3">
+        {% for suggestion in suggestions %}
+        <div class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200">
+            <i class="fas fa-exclamation-circle text-amber-500 mt-1"></i>
+            <p class="text-slate-700">{{ suggestion }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- 政策参考 -->
+<div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mt-6">
+    <h3 class="font-medium text-slate-800 mb-3"><i class="fas fa-book text-blue-500 mr-2"></i>辽宁省生态养殖政策参考</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
+        <div>
+            <p class="font-medium text-slate-800 mb-1">三年两养一休制度</p>
+            <p>滩涂养殖实行三年两养一休政策，每三年中有一年为生态修复期，期间可申请政府补贴。</p>
+        </div>
+        <div>
+            <p class="font-medium text-slate-800 mb-1">养殖容量管控</p>
+            <p>根据海域生态承载力确定养殖总量，鼓励贝藻套养、多营养层次综合养殖模式。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 承载力仪表
+    const gaugeChart = echarts.init(document.getElementById('capacity-gauge'));
+    gaugeChart.setOption({
+        series: [{
+            type: 'gauge',
+            progress: { show: true, width: 18 },
+            axisLine: { lineStyle: { width: 18 } },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            pointer: { show: false },
+            title: { show: true, fontSize: 14, color: '#64748b' },
+            detail: {
+                valueAnimation: true,
+                fontSize: 36,
+                fontWeight: 'bold',
+                formatter: '{value}',
+                color: {% if stats.capacity_index > 1 %}'#ef4444'{% elif stats.capacity_index > 0.6 %}'#f59e0b'{% else %}'#10b981'{% endif %}
+            },
+            data: [{
+                value: {{ (stats.capacity_index * 50)|round(0) }},
+                name: '承载力利用率'
+            }],
+            max: 100
+        }]
+    });
+    
+    // 营养盐柱状图
+    const nutrientChart = echarts.init(document.getElementById('nutrient-chart'));
+    nutrientChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['当前负荷', '安全阈值'] },
+        grid: { left: 60, right: 20, bottom: 30 },
+        xAxis: { type: 'category', data: ['氮负荷', '磷负荷'] },
+        yAxis: { type: 'value', name: 'kg' },
+        series: [
+            {
+                name: '当前负荷',
+                type: 'bar',
+                data: [{{ stats.nitrogen_load }}, {{ stats.phosphorus_load }}],
+                itemStyle: { color: '#3b82f6' }
+            },
+            {
+                name: '安全阈值',
+                type: 'bar',
+                data: [200, 60],
+                itemStyle: { color: '#94a3b8', type: 'dashed' }
+            }
+        ]
+    });
+</script>
+{% endblock %}

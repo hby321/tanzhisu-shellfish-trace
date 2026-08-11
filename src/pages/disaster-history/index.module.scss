@@ -1,0 +1,20 @@
+@use '@/styles/variables.scss' as *;
+
+.disasterPage { min-height: 100%; background: $color-bg-page; padding-bottom: $spacing-xl; }
+.yearTabs { display: flex; padding: $spacing-sm $page-padding; gap: $spacing-xs; }
+.yearTab { padding: 8rpx 24rpx; border-radius: $radius-round; font-size: $font-size-sm; background: $color-bg-card; color: $color-text-secondary; }
+.yearTabActive { background: $color-primary; color: #fff; }
+.section { padding: 0 $page-padding; }
+.card { background: $color-bg-card; border-radius: $radius-lg; padding: $spacing-md; margin-bottom: $spacing-sm; box-shadow: $shadow-card; }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: $spacing-xs; }
+.cardDate { font-size: $font-size-md; font-weight: $font-weight-medium; color: $color-text-primary; }
+.levelTag { font-size: $font-size-xs; padding: 4rpx 16rpx; border-radius: $radius-round; }
+.tagBlue { background: rgba(22,93,255,0.1); color: #165dff; }
+.tagOrange { background: rgba(255,125,0,0.1); color: #ff7d00; }
+.tagRed { background: rgba(245,63,63,0.1); color: #f53f3f; }
+.cardType { display: inline-block; font-size: $font-size-xs; background: rgba(8,102,196,0.08); color: $color-primary; padding: 4rpx 16rpx; border-radius: $radius-sm; margin-bottom: $spacing-xs; }
+.cardDesc { font-size: $font-size-sm; color: $color-text-secondary; line-height: $line-height-normal; }
+.cardLoss { font-size: $font-size-sm; color: $color-error; margin-top: $spacing-xs; }
+.cardReview { background: rgba(8,102,196,0.04); border-radius: $radius-md; padding: $spacing-sm; margin-top: $spacing-xs; }
+.reviewTitle { font-size: $font-size-xs; color: $color-primary; font-weight: $font-weight-medium; margin-bottom: 4rpx; }
+.reviewText { font-size: $font-size-sm; color: $color-text-secondary; line-height: $line-height-normal; }

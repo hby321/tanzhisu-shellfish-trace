@@ -1,0 +1,26 @@
+# Render.com 部署配置
+# 文档：https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: tanzhi-su-platform
+    runtime: python
+    plan: free  # 免费层，750 小时/月
+    buildCommand: bash build.sh
+    startCommand: gunicorn wsgi:application --config gunicorn.conf.py
+    envVars:
+      - key: DEPLOY_MODE
+        value: render
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: AI_API_KEY
+        sync: false  # 在 Render 控制台手动填写，不写入仓库
+      - key: AI_BASE_URL
+        value: https://api.deepseek.com/v1
+      - key: AI_MODEL
+        value: deepseek-chat
+      - key: AGENT_SERVER_URL
+        value: http://127.0.0.1:5000/ai-server
+      - key: SECRET_KEY
+        generateValue: true  # Render 自动生成随机密钥
+    healthCheckPath: /ai-server/health
+    autoDeploy: true

@@ -1,0 +1,177 @@
+@use '@/styles/variables.scss' as *;
+
+.knowledgePage {
+  min-height: 100%;
+  background: $color-bg-page;
+  padding-bottom: $spacing-xl;
+}
+
+// 专家问诊入口
+.expertBar {
+  margin: $spacing-md $page-padding;
+  background: linear-gradient(135deg, #722ed1 0%, #9254de 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  box-shadow: 0 4rpx 16rpx rgba(114, 46, 209, 0.3);
+  transition: all $transition-base;
+
+  &:active { opacity: 0.9; transform: scale(0.99); }
+}
+
+.expertIcon { font-size: 48rpx; }
+.expertText { flex: 1; }
+.expertTitle { color: #fff; font-size: $font-size-md; font-weight: $font-weight-medium; }
+.expertDesc { color: rgba(255,255,255,0.8); font-size: $font-size-xs; margin-top: 4rpx; }
+
+// 分类标签
+.categoryTabs {
+  display: flex;
+  padding: 0 $page-padding $spacing-sm;
+  gap: $spacing-xs;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.categoryTab {
+  font-size: $font-size-sm;
+  padding: 8rpx 24rpx;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  color: $color-text-secondary;
+  display: inline-block;
+}
+
+.categoryTabActive {
+  background: $color-primary;
+  color: #fff;
+}
+
+// 精选文章
+.section {
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.featuredCard {
+  background: linear-gradient(135deg, #0866c4 0%, #3d8de0 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: 0 4rpx 16rpx rgba(8, 102, 196, 0.2);
+  transition: all $transition-base;
+
+  &:active { opacity: 0.95; transform: scale(0.99); }
+}
+
+.featuredBadge {
+  display: inline-block;
+  font-size: $font-size-xs;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  margin-bottom: $spacing-xs;
+}
+
+.featuredTitle {
+  color: #fff;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  margin-bottom: 8rpx;
+}
+
+.featuredSummary {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+}
+
+.featuredMeta {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+// 普通文章
+.articleCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active { opacity: 0.95; transform: scale(0.99); }
+}
+
+.articleHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+}
+
+.articleContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.articleCategory {
+  display: inline-block;
+  font-size: $font-size-xs;
+  background: rgba(8, 102, 196, 0.08);
+  color: $color-primary;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-sm;
+  margin-bottom: 8rpx;
+}
+
+.articleTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  @include text-ellipsis-multi(2);
+}
+
+.articleSummary {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  margin-top: 8rpx;
+  @include text-ellipsis-multi(2);
+}
+
+.articleMeta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.articleRegion {
+  background: rgba(0, 184, 169, 0.08);
+  color: $color-ocean;
+  padding: 2rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.videoTag {
+  color: #f53f3f;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}

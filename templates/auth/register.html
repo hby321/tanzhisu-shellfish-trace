@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}农户注册 - 滩智溯{% endblock %}
+
+{% block login_content %}
+<div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md shadow-2xl border border-white/20">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-white">农户账号注册</h1>
+        <p class="text-sm text-slate-300 mt-1">加入滩智溯，开启智慧养殖之旅</p>
+    </div>
+    
+    <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-4">
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">用户名</label>
+            <input type="text" name="username" required class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400" placeholder="登录账号">
+        </div>
+        
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">真实姓名</label>
+            <input type="text" name="real_name" required class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400" placeholder="您的姓名">
+        </div>
+        
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">手机号</label>
+            <input type="tel" name="phone" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400" placeholder="手机号码">
+        </div>
+        
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">所在区域</label>
+            <select name="area" class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-400">
+                <option value="" class="bg-slate-800">请选择区域</option>
+                <option value="丹东东港" class="bg-slate-800">丹东东港</option>
+                <option value="丹东凤城" class="bg-slate-800">丹东凤城</option>
+                <option value="盘锦盖州" class="bg-slate-800">盘锦盖州</option>
+                <option value="其他" class="bg-slate-800">其他地区</option>
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">密码</label>
+            <input type="password" name="password" required class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400" placeholder="至少6位字符">
+        </div>
+        
+        <div>
+            <label class="block text-sm text-slate-300 mb-2">确认密码</label>
+            <input type="password" name="confirm_password" required class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400" placeholder="再次输入密码">
+        </div>
+        
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium py-3 rounded-lg transition">
+            注册账号
+        </button>
+    </form>
+    
+    <div class="mt-6 text-center">
+        <a href="{{ url_for('auth.login') }}" class="text-sm text-cyan-400 hover:text-cyan-300">← 返回登录</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}禁养区监测 - 滩智溯{% endblock %}
+{% block page_title %}禁养区违规监测{% endblock %}
+{% block page_desc %}保护海洋生态，合规养殖监管{% endblock %}
+
+{% block content %}
+<!-- 统计概览 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">禁养区点位</p>
+        <p class="text-3xl font-bold text-red-600 mt-1">{{ forbidden_flats|length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">违规养殖</p>
+        <p class="text-3xl font-bold text-amber-600 mt-1">{{ violations|length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">预警滩涂</p>
+        <p class="text-3xl font-bold text-blue-600 mt-1">{{ warning_flats|length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">合规率</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">
+            {{ ((warning_flats|length / (warning_flats|length + forbidden_flats|length + 1)) * 100)|round(1) }}%
+        </p>
+    </div>
+</div>
+
+<!-- 违规预警 -->
+<div class="bg-gradient-to-r from-red-500 to-pink-600 rounded-xl p-6 text-white mb-6">
+    <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-ban text-3xl"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-bold">违规养殖预警</h3>
+            <p class="opacity-80 mt-1">以下滩涂位于禁养区内，请立即处理</p>
+        </div>
+    </div>
+</div>
+
+<!-- 违规列表 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    {% for v in violations %}
+    <div class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-red-500">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h4 class="font-semibold text-slate-800">{{ v.flat.name }}</h4>
+                <p class="text-sm text-slate-500 mt-1">面积：{{ v.flat.area }} 亩</p>
+                <p class="text-sm text-slate-500">位置：{{ v.flat.latitude }}, {{ v.flat.longitude }}</p>
+            </div>
+            <span class="px-3 py-1 bg-red-100 text-red-700 text-sm rounded-full">违规</span>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-3 mb-4">
+            <p class="text-sm text-amber-800"><i class="fas fa-exclamation-triangle mr-1"></i>检测到违规养殖行为</p>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+            <div>
+                <p class="text-slate-600">养殖户：{{ v.farmer.real_name if v.farmer else '未知' }}</p>
+                <p class="text-slate-600">联系电话：{{ v.farmer.phone if v.farmer else '未知' }}</p>
+            </div>
+            <button onclick="notifyFarmer('{{ v.farmer.phone }}')" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition">
+                <i class="fas fa-bell mr-1"></i>通知整改
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if not violations %}
+    <div class="col-span-2 bg-green-50 rounded-xl p-8 text-center border border-green-200">
+        <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+        <p class="text-green-700 font-medium">当前无违规养殖记录</p>
+        <p class="text-sm text-green-600 mt-2">所有滩涂均在合规区域内</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 禁养区列表 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">禁养区滩涂列表</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-sm text-slate-500 border-b">
+                    <th class="pb-3">滩涂名称</th>
+                    <th class="pb-3">面积</th>
+                    <th class="pb-3">坐标</th>
+                    <th class="pb-3">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flat in forbidden_flats %}
+                <tr class="border-b">
+                    <td class="py-3 text-slate-800">{{ flat.name }}</td>
+                    <td class="py-3 text-slate-600">{{ flat.area }} 亩</td>
+                    <td class="py-3 text-slate-600 text-sm">{{ flat.latitude }}, {{ flat.longitude }}</td>
+                    <td class="py-3">
+                        {% if flat.status == 'normal' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">正常</span>
+                        {% elif flat.status == 'warning' %}
+                            <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">预警</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">异常</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function notifyFarmer(phone) {
+        if (!phone) {
+            alert('无联系电话');
+            return;
+        }
+        if (confirm(`确认向 ${phone} 发送整改通知？`)) {
+            alert('通知已发送');
+        }
+    }
+</script>
+{% endblock %}

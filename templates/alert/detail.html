@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}预警详情 - 滩智溯{% endblock %}
+{% block page_title %}预警详情{% endblock %}
+{% block page_desc %}预警全流程追踪与处置{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- 返回链接 -->
+    <a href="{{ url_for('alert.alert_list') }}" class="inline-flex items-center text-sm text-slate-500 hover:text-blue-600 mb-4">
+        <i class="fas fa-arrow-left mr-2"></i>返回预警列表
+    </a>
+
+    <!-- 预警级别头部卡片 -->
+    <div class="rounded-xl p-6 text-white shadow-sm mb-6
+                {% if alert.level == 'red' %}bg-gradient-to-r from-red-500 to-pink-600
+                {% elif alert.level == 'orange' %}bg-gradient-to-r from-amber-500 to-orange-500
+                {% else %}bg-gradient-to-r from-blue-500 to-cyan-600{% endif %}">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start gap-4">
+                <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-2xl {% if alert.level == 'red' %}pulse-red{% endif %}"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                            {% if alert.level == 'red' %}红色预警
+                            {% elif alert.level == 'orange' %}橙色预警
+                            {% else %}蓝色预警{% endif %}
+                        </span>
+                        <span class="px-3 py-1 bg-white/20 rounded-full text-sm">{{ alert.alert_type }}</span>
+                        {% if alert.resolved %}
+                        <span class="px-3 py-1 bg-green-500/40 rounded-full text-sm">
+                            <i class="fas fa-check-circle mr-1"></i>已处理
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-red-900/40 rounded-full text-sm">
+                            <i class="fas fa-clock mr-1"></i>待处理
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h2 class="text-xl font-bold">{{ alert.message }}</h2>
+                    <p class="text-sm opacity-80 mt-2">
+                        <i class="fas fa-clock mr-1"></i>触发时间：{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </p>
+                </div>
+            </div>
+            {% if not alert.resolved %}
+            <form id="handle-alert-form" method="POST" action="{{ url_for('alert.handle_alert', alert_id=alert.id) }}">
+                <input type="hidden" name="action" value="resolve">
+                <button type="submit" class="px-5 py-2.5 bg-white text-slate-800 rounded-lg font-medium hover:bg-slate-100 transition shadow-md">
+                    <i class="fas fa-check mr-2"></i>标记已处理
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- 关联滩涂信息 -->
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">
+                <i class="fas fa-map-marked-alt text-blue-500 mr-2"></i>关联滩涂信息
+            </h3>
+            {% if alert.flat %}
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <span class="text-sm text-slate-500">滩涂名称</span>
+                    <span class="font-medium text-slate-800">{{ alert.flat.name }}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <span class="text-sm text-slate-500">滩涂面积</span>
+                    <span class="font-medium text-slate-800">{{ alert.flat.area }} 亩</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-6 text-slate-400">
+                <i class="fas fa-info-circle text-3xl mb-2"></i>
+                <p class="text-sm">未关联具体滩涂</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 应对建议 -->
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">
+                <i class="fas fa-lightbulb text-amber-500 mr-2"></i>应对建议
+            </h3>
+            {% if alert.advice %}
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p class="text-sm text-amber-800 leading-relaxed">{{ alert.advice }}</p>
+            </div>
+            {% else %}
+            <div class="text-center py-6 text-slate-400">
+                <i class="fas fa-info-circle text-3xl mb-2"></i>
+                <p class="text-sm">暂无应对建议</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 时间线 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-6">
+            <i class="fas fa-stream text-blue-500 mr-2"></i>处理时间线
+        </h3>
+        <div class="relative">
+            <div class="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+
+            <div class="relative flex items-start gap-4 mb-6">
+                <div class="w-8 h-8 {% if alert.level == 'red' %}bg-red-500{% elif alert.level == 'orange' %}bg-amber-500{% else %}bg-blue-500{% endif %} rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 z-10">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="flex-1 bg-slate-50 rounded-lg p-4">
+                    <p class="font-medium text-slate-800">预警触发</p>
+                    <p class="text-sm text-slate-500 mt-1">
+                        <i class="fas fa-clock mr-1"></i>{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </p>
+                    <p class="text-sm text-slate-600 mt-2">{{ alert.message }}</p>
+                </div>
+            </div>
+
+            {% if alert.resolved %}
+            <div class="relative flex items-start gap-4">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 z-10">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="flex-1 bg-green-50 rounded-lg p-4">
+                    <p class="font-medium text-green-800">预警已处理</p>
+                    <p class="text-sm text-green-600 mt-1">
+                        <i class="fas fa-clock mr-1"></i>
+                        {% if alert.resolved_at %}{{ alert.resolved_at.strftime('%Y-%m-%d %H:%M:%S') }}{% else %}处理时间未记录{% endif %}
+                    </p>
+                    <p class="text-sm text-green-700 mt-2">预警已被标记为已处理，相关风险已得到响应。</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="relative flex items-start gap-4">
+                <div class="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 text-sm flex-shrink-0 z-10">
+                    <i class="fas fa-hourglass"></i>
+                </div>
+                <div class="flex-1 bg-slate-50 rounded-lg p-4 border border-dashed border-slate-300">
+                    <p class="font-medium text-slate-500">等待处理</p>
+                    <p class="text-sm text-slate-400 mt-1">该预警尚未被处理，请尽快按照应对建议执行。</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-6 text-center">
+        <a href="{{ url_for('alert.alert_list') }}" class="text-blue-500 hover:text-blue-700">
+            <i class="fas fa-arrow-left mr-1"></i>返回预警列表
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const handleAlertForm = document.getElementById('handle-alert-form');
+    if (handleAlertForm) {
+        handleAlertForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type=submit]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('预警已处理！');
+                    location.reload();
+                } else {
+                    alert('处理失败：' + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>标记已处理';
+                }
+            })
+            .catch(err => {
+                alert('网络错误，请重试');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>标记已处理';
+            });
+        });
+    }
+</script>
+{% endblock %}

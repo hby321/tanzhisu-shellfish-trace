@@ -1,0 +1,32 @@
+@use '@/styles/variables.scss' as *;
+
+.expertPage { display: flex; flex-direction: column; position: relative; width: 100%; height: 100%; background: $color-bg-page; box-sizing: border-box; overflow: hidden; }
+
+// 专家信息
+.expertHeader { flex-shrink: 0; background: linear-gradient(135deg, #722ed1 0%, #9254de 100%); padding: $spacing-md $page-padding; display: flex; align-items: center; gap: $spacing-sm; }
+.expertAvatar { width: 80rpx; height: 80rpx; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 40rpx; }
+.expertInfo { flex: 1; min-width: 0; }
+.expertName { color: #fff; font-size: $font-size-md; font-weight: $font-weight-medium; }
+.expertDesc { color: rgba(255,255,255,0.8); font-size: $font-size-xs; margin-top: 4rpx; }
+
+// 消息列表 - ScrollView 需要 min-height:0 才能在 flex 中正确滚动
+.msgList { flex: 1 1 0%; min-height: 0; padding: $spacing-md $page-padding; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+.msgItem { display: flex; margin-bottom: $spacing-md; gap: $spacing-sm; }
+.msgAvatar { width: 64rpx; height: 64rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32rpx; flex-shrink: 0; }
+.msgAvatarUser { background: rgba(8,102,196,0.1); }
+.msgAvatarExpert { background: rgba(114,46,209,0.1); }
+.msgBubble { max-width: 500rpx; padding: $spacing-sm $spacing-md; border-radius: $radius-md; font-size: $font-size-sm; line-height: $line-height-normal; white-space: pre-wrap; word-break: break-word; }
+.msgBubbleUser { background: $color-primary; color: #fff; border-top-right-radius: $radius-xs; }
+.msgBubbleExpert { background: $color-bg-card; color: $color-text-primary; border-top-left-radius: $radius-xs; box-shadow: $shadow-card; }
+.msgTime { font-size: 20rpx; color: $color-text-tertiary; margin-top: 4rpx; }
+
+// 快捷问题
+.quickQuestions { flex-shrink: 0; padding: 0 $page-padding $spacing-sm; background: $color-bg-page; }
+.quickQ { display: inline-block; font-size: $font-size-xs; background: rgba(114,46,209,0.08); color: #722ed1; padding: 8rpx 24rpx; border-radius: $radius-round; margin-right: $spacing-xs; margin-bottom: $spacing-xs; }
+
+// 输入区
+.inputBar { flex-shrink: 0; display: flex; padding: $spacing-sm $page-padding; background: $color-bg-card; box-shadow: $shadow-float; gap: $spacing-sm; align-items: center; }
+.inputBox { flex: 1; height: 72rpx; background: $color-bg-hover; border-radius: $radius-button; padding: 0 $spacing-md; font-size: $font-size-sm; }
+.uploadBtn { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; background: $color-bg-hover; border-radius: $radius-button; font-size: 36rpx; &:active { opacity: 0.7; } }
+.sendBtn { @include button-reset; width: 96rpx; height: 72rpx; background: $color-primary; color: #fff; border-radius: $radius-button; font-size: $font-size-sm; font-weight: $font-weight-medium; &:active { opacity: 0.8; } }

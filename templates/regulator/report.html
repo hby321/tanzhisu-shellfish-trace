@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}监管台账 - 滩智溯{% endblock %}
+{% block page_title %}一键导出监管台账{% endblock %}
+{% block page_desc %}农产品质量安全检查全套台账{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <a href="{{ url_for('regulator.monitoring_report', type='full') }}" class="block">
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover border-t-4 border-blue-500">
+            <i class="fas fa-file-alt text-3xl text-blue-500 mb-3"></i>
+            <h3 class="font-medium text-slate-800">完整台账</h3>
+            <p class="text-sm text-slate-500 mt-1">全域数据汇总报告</p>
+        </div>
+    </a>
+    <a href="{{ url_for('regulator.monitoring_report', type='water') }}" class="block">
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover border-t-4 border-cyan-500">
+            <i class="fas fa-water text-3xl text-cyan-500 mb-3"></i>
+            <h3 class="font-medium text-slate-800">水质监测台账</h3>
+            <p class="text-sm text-slate-500 mt-1">水质数据专项报告</p>
+        </div>
+    </a>
+    <a href="{{ url_for('regulator.monitoring_report', type='alert') }}" class="block">
+        <div class="bg-white rounded-xl p-6 shadow-sm card-hover border-t-4 border-red-500">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-3"></i>
+            <h3 class="font-medium text-slate-800">预警处置台账</h3>
+            <p class="text-sm text-slate-500 mt-1">灾害预警处理记录</p>
+        </div>
+    </a>
+</div>
+
+<!-- 报告详情 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-slate-800">{{ report_data.report_title }}</h3>
+        <div class="flex gap-2">
+            <span class="text-sm text-slate-500">生成时间：{{ report_data.generated_at }}</span>
+            <a href="{{ url_for('regulator.export_report', type=report_type) }}" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">
+                <i class="fas fa-download mr-1"></i>导出CSV
+            </a>
+        </div>
+    </div>
+    
+    {% if report_data.summary %}
+    <div class="bg-blue-50 rounded-lg p-4 mb-4">
+        <p class="text-sm text-blue-700">{{ report_data.summary }}</p>
+    </div>
+    {% endif %}
+    
+    {% for section in report_data.sections %}
+    <div class="mb-6">
+        <h4 class="font-medium text-slate-800 mb-3">{{ section.title }}</h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for key, value in section.data[0].items() %}
+            <div class="p-3 rounded-lg bg-slate-50">
+                <p class="text-sm text-slate-500">{{ key }}</p>
+                <p class="text-xl font-bold text-slate-800 mt-1">{{ value }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if report_data.alert_levels %}
+    <div class="grid grid-cols-3 gap-4 mb-4">
+        <div class="p-4 rounded-lg bg-blue-50 border border-blue-200 text-center">
+            <p class="text-sm text-blue-600">蓝色预警</p>
+            <p class="text-2xl font-bold text-blue-700">{{ report_data.alert_levels.blue }}</p>
+        </div>
+        <div class="p-4 rounded-lg bg-amber-50 border border-amber-200 text-center">
+            <p class="text-sm text-amber-600">橙色预警</p>
+            <p class="text-2xl font-bold text-amber-700">{{ report_data.alert_levels.orange }}</p>
+        </div>
+        <div class="p-4 rounded-lg bg-red-50 border border-red-200 text-center">
+            <p class="text-sm text-red-600">红色预警</p>
+            <p class="text-2xl font-bold text-red-700">{{ report_data.alert_levels.red }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 使用说明 -->
+<div class="bg-slate-50 rounded-xl p-6 mt-6">
+    <h4 class="font-medium text-slate-700 mb-3"><i class="fas fa-info-circle text-blue-500 mr-2"></i>使用说明</h4>
+    <ul class="text-sm text-slate-600 space-y-2">
+        <li>• 本系统生成的电子台账可直接用于农产品质量安全监管检查</li>
+        <li>• 支持一键导出CSV格式，方便进行数据统计和存档</li>
+        <li>• 所有数据均来自系统实时监测，确保数据真实可靠</li>
+        <li>• 可按不同类型生成专项报告，满足不同监管需求</li>
+    </ul>
+</div>
+{% endblock %}

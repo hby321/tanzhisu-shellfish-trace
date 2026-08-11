@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}养殖密度监测 - 滩智溯{% endblock %}
+{% block page_title %}养殖密度监测{% endblock %}
+{% block page_desc %}预防海水富营养化，保护近海生态{% endblock %}
+
+{% block content %}
+<!-- 统计概览 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">监测滩涂</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ density_data|length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-red-600">高密度预警</p>
+        <p class="text-3xl font-bold text-red-600 mt-1">{{ high_density_count }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-green-600">安全密度</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">{{ density_data|length - high_density_count }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">安全阈值</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">80 <span class="text-sm">kg/亩</span></p>
+    </div>
+</div>
+
+<!-- 密度图表 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">滩涂养殖密度分布</h3>
+    <div id="density-chart" style="height: 350px;"></div>
+</div>
+
+<!-- 密度详情表 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">密度详情</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-4 py-3">滩涂</th>
+                    <th class="px-4 py-3">养殖户</th>
+                    <th class="px-4 py-3">面积 (亩)</th>
+                    <th class="px-4 py-3">养殖密度 (kg/亩)</th>
+                    <th class="px-4 py-3">状态</th>
+                    <th class="px-4 py-3">建议</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in density_data %}
+                <tr class="border-b">
+                    <td class="px-4 py-3 text-slate-800 font-medium">{{ item.flat.name }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ item.farmer }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ item.flat.area }}</td>
+                    <td class="px-4 py-3">
+                        <span class="{% if item.high_density %}text-red-600 font-medium{% else %}text-green-600{% endif %}">
+                            {{ item.density }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if item.high_density %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">高密度</span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">安全</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-slate-600">
+                        {% if item.high_density %}
+                            <span class="text-red-600">建议降低密度或扩大养殖面积</span>
+                        {% else %}
+                            <span class="text-green-600">密度适宜，可保持现状</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 富营养化风险提示 -->
+{% if high_density_count > 0 %}
+<div class="bg-gradient-to-r from-red-500 to-pink-600 rounded-xl p-6 text-white mt-6">
+    <div class="flex items-center gap-4">
+        <i class="fas fa-exclamation-triangle text-3xl"></i>
+        <div>
+            <h3 class="font-bold text-lg">海水富营养化风险预警</h3>
+            <p class="opacity-90 text-sm mt-1">{{ high_density_count }}个滩涂养殖密度过高，可能导致海水富营养化，引发赤潮等生态灾害</p>
+        </div>
+        <button class="ml-auto px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+            <i class="fas fa-bell mr-1"></i>通知整改
+        </button>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const data = {{ density_data | map(attribute='density') | list | tojson }};
+    const names = {{ density_data | map(attribute='flat.name') | list | tojson }};
+    const colors = data.map(d => d > 80 ? '#ef4444' : '#10b981');
+    
+    const chart = echarts.init(document.getElementById('density-chart'));
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: 60, right: 20, bottom: 80 },
+        xAxis: { 
+            type: 'category', 
+            data: names,
+            axisLabel: { rotate: 45 }
+        },
+        yAxis: { 
+            type: 'value', 
+            name: '密度 (kg/亩)',
+            markLine: {
+                data: [{ yAxis: 80, lineStyle: { color: '#f59e0b', type: 'dashed' } }]
+            }
+        },
+        series: [{
+            type: 'bar',
+            data: data.map((v, i) => ({
+                value: v,
+                itemStyle: { color: colors[i] }
+            })),
+            barWidth: '60%'
+        }]
+    });
+</script>
+{% endblock %}

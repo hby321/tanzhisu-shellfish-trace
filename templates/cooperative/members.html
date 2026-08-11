@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}社员管理 - 滩智溯{% endblock %}
+{% block page_title %}合作社社员管理{% endblock %}
+{% block page_desc %}统一管理社员数据，对接加工厂{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">社员总数</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ total_members }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">入社滩涂</p>
+        <p class="text-3xl font-bold text-blue-600 mt-1">{{ members | sum(attribute='flats_count') }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">溯源记录</p>
+        <p class="text-3xl font-bold text-purple-600 mt-1">{{ members | sum(attribute='traces_count') }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">待处理预警</p>
+        <p class="text-3xl font-bold text-red-600 mt-1">{{ members | sum(attribute='alerts_count') }}</p>
+    </div>
+</div>
+
+<!-- 社员列表 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-slate-800">社员列表</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">社员信息</th>
+                    <th class="px-6 py-3">滩涂数量</th>
+                    <th class="px-6 py-3">溯源记录</th>
+                    <th class="px-6 py-3">待处理预警</th>
+                    <th class="px-6 py-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in members %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                {{ item.member.real_name[0] }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800">{{ item.member.real_name }}</p>
+                                <p class="text-sm text-slate-500">{{ item.member.phone or '无电话' }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">{{ item.flats_count }}</td>
+                    <td class="px-6 py-4 text-purple-600">{{ item.traces_count }}</td>
+                    <td class="px-6 py-4">
+                        {% if item.alerts_count > 0 %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">{{ item.alerts_count }}</span>
+                        {% else %}
+                            <span class="text-green-500">✓ 正常</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-500 hover:text-blue-700 text-sm">查看详情</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not members %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-slate-400">暂无社员</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

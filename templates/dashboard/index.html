@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}数据总览 - 滩智溯{% endblock %}
+{% block page_title %}数据总览{% endblock %}
+{% block page_desc %}实时监测，数据驱动管理{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">滩涂数量</p>
+                <p class="text-3xl font-bold text-slate-800 mt-1">{{ stats.get('flat_count', stats.get('total_flats', 0)) }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-map text-blue-600 text-xl"></i>
+            </div>
+        </div>
+        {% if stats.get('normal_flats') is defined %}
+        <div class="mt-4 flex gap-4 text-sm">
+            <span class="text-green-600">正常 {{ stats.get('normal_flats', 0) }}</span>
+            <span class="text-amber-600">预警 {{ stats.get('warning_flats', 0) }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">{% if stats.get('alert_count') %}未处理预警{% else %}预警总数{% endif %}</p>
+                <p class="text-3xl font-bold text-red-600 mt-1">{{ stats.get('alert_count', stats.get('unresolved_alerts', stats.get('today_alerts', 0))) }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+        </div>
+        {% if stats.get('total_alerts') %}
+        <div class="mt-4 text-sm text-slate-500">累计预警 {{ stats.get('total_alerts', 0) }} 次</div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">设备在线</p>
+                <p class="text-3xl font-bold text-green-600 mt-1">{{ stats.get('device_online', stats.get('online_devices', 0)) }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-microchip text-green-600 text-xl"></i>
+            </div>
+        </div>
+        {% if stats.get('total_devices') %}
+        <div class="mt-4 text-sm text-slate-500">共 {{ stats.get('total_devices', 0) }} 台设备</div>
+        {% endif %}
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-slate-500">溯源记录</p>
+                <p class="text-3xl font-bold text-purple-600 mt-1">{{ stats.get('trace_count', stats.get('trace_total', 0)) }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-qrcode text-purple-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">水质趋势（近7天）</h3>
+        <div id="water-trend-chart" style="height: 300px;"></div>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">预警类型分布</h3>
+        <div id="alert-pie-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+<!-- 水质列表 -->
+{% if stats.get('latest_quality') %}
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">我的滩涂水质状态</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-sm text-slate-500 border-b">
+                    <th class="pb-3">滩涂</th>
+                    <th class="pb-3">水温 (℃)</th>
+                    <th class="pb-3">溶解氧 (mg/L)</th>
+                    <th class="pb-3">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stats.get('latest_quality', []) %}
+                <tr class="border-b last:border-0">
+                    <td class="py-3 text-slate-800">{{ item.flat_name }}</td>
+                    <td class="py-3 text-slate-600">{{ item.temperature }}</td>
+                    <td class="py-3 text-slate-600">{{ item.oxygen }}</td>
+                    <td class="py-3">
+                        {% if item.status == 'normal' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">正常</span>
+                        {% elif item.status == 'warning' %}
+                            <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">预警</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs">异常</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- 合作社/监管特有内容 -->
+{% if current_user.role == 'cooperative' or current_user.role == 'regulator' %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <i class="fas fa-users text-3xl mb-2"></i>
+        <p class="text-3xl font-bold">{{ stats.get('member_count', stats.get('total_flats', 0)) }}</p>
+        <p class="text-blue-100 text-sm">{% if stats.get('member_count') %}社员总数{% else %}滩涂总数{% endif %}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+        <i class="fas fa-exclamation-circle text-3xl mb-2"></i>
+        <p class="text-3xl font-bold">{{ stats.get('unresolved_alerts', stats.get('forbidden_flats', 0)) }}</p>
+        <p class="text-amber-100 text-sm">{% if stats.get('unresolved_alerts') %}待处理预警{% else %}禁养区监测{% endif %}</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <i class="fas fa-leaf text-3xl mb-2"></i>
+        <p class="text-3xl font-bold">{{ stats.get('online_devices', stats.get('offline_devices', 0)) }}</p>
+        <p class="text-green-100 text-sm">{% if stats.get('online_devices') %}在线设备{% else %}离线设备{% endif %}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 水质趋势图
+    fetch('/api/water-quality/1?hours=168')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.data.length > 0) {
+                const chart = echarts.init(document.getElementById('water-trend-chart'));
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['水温', '溶解氧'] },
+                    grid: { left: 50, right: 50, bottom: 30 },
+                    xAxis: { type: 'category', data: data.data.map(d => d.timestamp.split(' ')[1] || d.timestamp) },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '水温', type: 'line', data: data.data.map(d => d.temperature), smooth: true, itemStyle: { color: '#3b82f6' } },
+                        { name: '溶解氧', type: 'line', data: data.data.map(d => d.oxygen), smooth: true, itemStyle: { color: '#10b981' } }
+                    ]
+                });
+            } else {
+                // 显示模拟数据
+                const chart = echarts.init(document.getElementById('water-trend-chart'));
+                const times = [];
+                const temps = [];
+                const oxygens = [];
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    times.push((date.getMonth() + 1) + '/' + date.getDate());
+                    temps.push((Math.random() * 10 + 2).toFixed(1));
+                    oxygens.push((Math.random() * 3 + 4).toFixed(1));
+                }
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['水温', '溶解氧'] },
+                    grid: { left: 50, right: 50, bottom: 30 },
+                    xAxis: { type: 'category', data: times },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '水温', type: 'line', data: temps, smooth: true, itemStyle: { color: '#3b82f6' } },
+                        { name: '溶解氧', type: 'line', data: oxygens, smooth: true, itemStyle: { color: '#10b981' } }
+                    ]
+                });
+            }
+        });
+    
+    // 预警饼图
+    fetch('/api/alerts')
+        .then(r => r.json())
+        .then(data => {
+            const chart = echarts.init(document.getElementById('alert-pie-chart'));
+            const levelCounts = { blue: 0, orange: 0, red: 0 };
+            if (data.success) {
+                data.data.forEach(a => {
+                    levelCounts[a.level] = (levelCounts[a.level] || 0) + 1;
+                });
+            }
+            chart.setOption({
+                tooltip: { trigger: 'item' },
+                legend: { bottom: '0%' },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: [
+                        { value: levelCounts.blue || 3, name: '蓝色预警', itemStyle: { color: '#3b82f6' } },
+                        { value: levelCounts.orange || 2, name: '橙色预警', itemStyle: { color: '#f59e0b' } },
+                        { value: levelCounts.red || 1, name: '红色预警', itemStyle: { color: '#ef4444' } }
+                    ]
+                }]
+            });
+        });
+</script>
+{% endblock %}

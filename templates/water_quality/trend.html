@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% block title %}{{ flat.name }} - 水质趋势 - 滩智溯{% endblock %}
+{% block page_title %}水质趋势分析{% endblock %}
+{% block page_desc %}{{ flat.name }} - 实时监测与历史数据{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- 水质概览卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-slate-500 text-sm">🌡️ 水温</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-600">实时</span>
+            </div>
+            <div class="text-3xl font-bold text-slate-800">
+                {{ latest_data.temperature if latest_data else '--' }}
+                <span class="text-lg font-normal text-slate-400">℃</span>
+            </div>
+            <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                {% if latest_data %}
+                {% set temp_pct = latest_data.temperature * 4 %}
+                {% if temp_pct > 100 %}{% set temp_pct = 100 %}{% endif %}
+                <div class="h-full bg-gradient-to-r from-blue-400 to-red-400 rounded-full" style="width: {{ temp_pct }}%"></div>
+                {% else %}
+                <div class="h-full bg-slate-300 rounded-full" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-400 mt-2">适宜范围: 8-20℃</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-slate-500 text-sm">💨 溶解氧</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-green-50 text-green-600">充足</span>
+            </div>
+            <div class="text-3xl font-bold text-slate-800">
+                {{ latest_data.dissolved_oxygen if latest_data else '--' }}
+                <span class="text-lg font-normal text-slate-400">mg/L</span>
+            </div>
+            <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                {% if latest_data %}
+                {% set oxy_pct = latest_data.dissolved_oxygen * 12 %}
+                {% if oxy_pct > 100 %}{% set oxy_pct = 100 %}{% endif %}
+                <div class="h-full bg-gradient-to-r from-red-400 to-green-400 rounded-full" style="width: {{ oxy_pct }}%"></div>
+                {% else %}
+                <div class="h-full bg-slate-300 rounded-full" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-400 mt-2">适宜范围: ≥5mg/L</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-slate-500 text-sm">🌊 盐度</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-purple-50 text-purple-600">正常</span>
+            </div>
+            <div class="text-3xl font-bold text-slate-800">
+                {{ latest_data.salinity if latest_data else '--' }}
+                <span class="text-lg font-normal text-slate-400">‰</span>
+            </div>
+            <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                {% if latest_data %}
+                {% set salt_pct = (latest_data.salinity - 15) * 3.33 %}
+                {% if salt_pct < 0 %}{% set salt_pct = 0 %}{% endif %}
+                {% if salt_pct > 100 %}{% set salt_pct = 100 %}{% endif %}
+                <div class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full" style="width: {{ salt_pct }}%"></div>
+                {% else %}
+                <div class="h-full bg-slate-300 rounded-full" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-400 mt-2">适宜范围: 25-35‰</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-slate-500 text-sm">⚗️ pH值</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-600">正常</span>
+            </div>
+            <div class="text-3xl font-bold text-slate-800">
+                {{ latest_data.ph if latest_data else '--' }}
+                <span class="text-lg font-normal text-slate-400"></span>
+            </div>
+            <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                {% if latest_data %}
+                {% set ph_pct = (latest_data.ph - 5) * 12.5 %}
+                {% if ph_pct < 0 %}{% set ph_pct = 0 %}{% endif %}
+                {% if ph_pct > 100 %}{% set ph_pct = 100 %}{% endif %}
+                <div class="h-full bg-gradient-to-r from-red-400 via-green-400 to-purple-500 rounded-full" style="width: {{ ph_pct }}%"></div>
+                {% else %}
+                <div class="h-full bg-slate-300 rounded-full" style="width: 0%"></div>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-400 mt-2">适宜范围: 7.5-8.5</p>
+        </div>
+    </div>
+
+    <!-- 时间选择器 -->
+    <div class="bg-white rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-600 font-medium">📅 时间范围：</span>
+                <div class="flex gap-2">
+                    <button onclick="changeDays(7, this)" class="days-btn px-4 py-2 rounded-lg text-sm border border-slate-200 hover:bg-blue-50 hover:text-blue-600 transition">近7天</button>
+                    <button onclick="changeDays(30, this)" class="days-btn px-4 py-2 rounded-lg text-sm border border-slate-200 hover:bg-blue-50 hover:text-blue-600 transition bg-blue-50 text-blue-600">近30天</button>
+                    <button onclick="changeDays(90, this)" class="days-btn px-4 py-2 rounded-lg text-sm border border-slate-200 hover:bg-blue-50 hover:text-blue-600 transition">近90天</button>
+                </div>
+            </div>
+            <div class="text-sm text-slate-500">
+                {% if latest_data %}
+                最后更新：{{ latest_data.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                暂无数据
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 趋势图 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-800">📈 水质变化趋势</h3>
+            <div class="flex gap-4 text-sm">
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="show-temp" checked onchange="updateChart()" class="w-4 h-4">
+                    <span class="text-blue-600">🌡️ 水温</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="show-salt" checked onchange="updateChart()" class="w-4 h-4">
+                    <span class="text-purple-600">🌊 盐度</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="show-oxy" checked onchange="updateChart()" class="w-4 h-4">
+                    <span class="text-green-600">💨 溶解氧</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="show-ph" checked onchange="updateChart()" class="w-4 h-4">
+                    <span class="text-amber-600">⚗️ pH</span>
+                </label>
+            </div>
+        </div>
+        <div id="trend-chart" style="width: 100%; height: 400px;"></div>
+    </div>
+
+    <!-- 分指标图表 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-700 mb-3">🌡️ 水温变化</h3>
+            <div id="temp-chart" style="width: 100%; height: 200px;"></div>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-700 mb-3">💨 溶解氧变化</h3>
+            <div id="oxy-chart" style="width: 100%; height: 200px;"></div>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-700 mb-3">🌊 盐度变化</h3>
+            <div id="salt-chart" style="width: 100%; height: 200px;"></div>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-700 mb-3">⚗️ pH值变化</h3>
+            <div id="ph-chart" style="width: 100%; height: 200px;"></div>
+        </div>
+    </div>
+
+    <!-- 数据说明 -->
+    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <div class="flex gap-3">
+            <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+            <div class="text-sm text-blue-800">
+                <strong>数据说明与来源：</strong>
+                <ul class="mt-2 ml-4 list-disc space-y-1">
+                    <li><strong>水温：</strong>春季5-15℃、夏季18-26℃、秋季8-18℃、冬季0-6℃（来源：大连栉孔扇贝地理标志规范、辽宁省海洋生态预警监测公报）</li>
+                    <li><strong>盐度：</strong>辽河口低盐区<27‰，东港31-32‰，夏季雨季偏低、冬季偏高（来源：2024年辽宁省海洋生态预警监测公报）</li>
+                    <li><strong>溶解氧：</strong>夏季2.79-9.97 mg/L，与水温呈反比（来源：2024年北海区海洋生态预警监测公报）</li>
+                    <li><strong>pH值：</strong>7.33-8.90（来源：GB 11607-89 渔业水质标准）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 极端天气事件图例 -->
+    <div class="bg-red-50 rounded-xl p-4 border border-red-100 mt-4">
+        <div class="flex gap-3">
+            <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+            <div class="text-sm text-red-800">
+                <strong>极端天气事件标记说明：</strong>
+                <div class="flex flex-wrap gap-4 mt-2">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red-500 rounded-full"></span>🌀 台风：盐度骤降6‰，溶氧减少3mg/L</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded-full"></span>🌊 洪水：盐度骤降8‰，pH降至7.2</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red-600 rounded-full"></span>🔴 赤潮：溶氧骤降4mg/L，pH升高</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-400 rounded-full"></span>❄️ 寒潮：水温骤降10℃，溶氧升高</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const FLAT_ID = {{ flat.id }};
+const API_URL = `/water/quality-trend/${FLAT_ID}`;
+let currentDays = 30;
+let mainChart = null;
+let tempChart = null;
+let oxyChart = null;
+let saltChart = null;
+let phChart = null;
+let currentData = null;
+
+// 初始化所有图表
+function initCharts() {
+    mainChart = echarts.init(document.getElementById('trend-chart'));
+    tempChart = echarts.init(document.getElementById('temp-chart'));
+    oxyChart = echarts.init(document.getElementById('oxy-chart'));
+    saltChart = echarts.init(document.getElementById('salt-chart'));
+    phChart = echarts.init(document.getElementById('ph-chart'));
+
+    window.addEventListener('resize', () => {
+        mainChart.resize();
+        tempChart.resize();
+        oxyChart.resize();
+        saltChart.resize();
+        phChart.resize();
+    });
+}
+
+// 加载数据
+function loadData(days) {
+    fetch(`${API_URL}?days=${days}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.chart_data) {
+                currentData = data;
+                renderCharts(data.chart_data);
+            } else {
+                alert('暂无水质数据');
+            }
+        })
+        .catch(err => console.error('加载失败:', err));
+}
+
+// 获取季节和极端天气标记
+function getChartMarkers(chartData) {
+    const dates = chartData.dates;
+    const markers = {
+        markAreas: [],
+        markLines: []
+    };
+    
+    if (dates.length === 0) return markers;
+    
+    // 添加季节性背景区域
+    const seasons = [
+        { name: '冬季', color: 'rgba(59, 130, 246, 0.08)', months: [12, 1, 2] },
+        { name: '春季', color: 'rgba(34, 197, 94, 0.08)', months: [3, 4, 5] },
+        { name: '夏季', color: 'rgba(239, 68, 68, 0.06)', months: [6, 7, 8] },
+        { name: '秋季', color: 'rgba(249, 115, 22, 0.06)', months: [9, 10, 11] }
+    ];
+    
+    // 根据日期范围添加季节标记（每个季节区间的中间点）
+    let currentSeason = null;
+    let seasonStartIdx = 0;
+    dates.forEach((dateStr, idx) => {
+        const d = new Date(dateStr);
+        const month = d.getMonth() + 1;
+        let seasonName = null;
+        seasons.forEach(s => {
+            if (s.months.includes(month)) {
+                if (currentSeason !== s.name) {
+                    currentSeason = s.name;
+                    seasonStartIdx = idx;
+                }
+                seasonName = s.name;
+            }
+        });
+        // 当季节变化或到达最后一个点时，添加标记
+        if ((seasonName && currentSeason !== seasonName) || idx === dates.length - 1) {
+            const midIdx = Math.floor((seasonStartIdx + idx) / 2);
+            if (midIdx > 0 && seasonName) {
+                markers.markLines.push({
+                    xAxis: dates[midIdx],
+                    lineStyle: { color: 'transparent' },
+                    label: { 
+                        formatter: currentSeason || seasonName, 
+                        position: 'top', 
+                        color: seasons.find(s => s.name === (currentSeason || seasonName)).color.replace('rgba', '').replace(', 0.08)', '').replace(', 0.06)', ''),
+                        backgroundColor: 'white',
+                        padding: [2, 6],
+                        borderRadius: 3,
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        fontSize: 11
+                    }
+                });
+            }
+        }
+    });
+    
+    // 极端天气事件标记（基于相对位置）
+    // 数据从早到晚排列，dates[0]是最早的日期，dates[dates.length-1]是今天
+    const totalPoints = dates.length;
+    const now = new Date();
+    
+    // 事件相对于今天的天数（day ago = N days from today）
+    // 我们需要在dates数组中找到距离今天特定天数的点
+    function findDateByDaysAgo(daysAgo) {
+        for (let i = 0; i < dates.length; i++) {
+            const d = new Date(dates[i]);
+            const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+            if (diffDays <= daysAgo && diffDays >= daysAgo - 1) {
+                return dates[i];
+            }
+        }
+        return null;
+    }
+    
+    // 台风事件：距今天约15天
+    const typhoonDate = findDateByDaysAgo(15);
+    if (typhoonDate) {
+        markers.markLines.push({
+            xAxis: typhoonDate,
+            lineStyle: { color: '#ef4444', type: 'dashed', width: 2 },
+            label: { formatter: '🌀 台风', position: 'top', color: '#ef4444', fontSize: 11 }
+        });
+    }
+    
+    // 洪水事件：距今天约45天
+    const floodDate = findDateByDaysAgo(45);
+    if (floodDate) {
+        markers.markLines.push({
+            xAxis: floodDate,
+            lineStyle: { color: '#3b82f6', type: 'dashed', width: 2 },
+            label: { formatter: '🌊 洪水', position: 'top', color: '#3b82f6', fontSize: 11 }
+        });
+    }
+    
+    // 赤潮事件：距今天约5天
+    const redTideDate = findDateByDaysAgo(5);
+    if (redTideDate) {
+        markers.markLines.push({
+            xAxis: redTideDate,
+            lineStyle: { color: '#dc2626', type: 'dashed', width: 2 },
+            label: { formatter: '🔴 赤潮', position: 'top', color: '#dc2626', fontSize: 11 }
+        });
+    }
+    
+    // 春季大风：距今天约110天
+    const stormDate = findDateByDaysAgo(110);
+    if (stormDate) {
+        markers.markLines.push({
+            xAxis: stormDate,
+            lineStyle: { color: '#f59e0b', type: 'dashed', width: 2 },
+            label: { formatter: '💨 大风', position: 'top', color: '#f59e0b', fontSize: 11 }
+        });
+    }
+    
+    return markers;
+}
+
+// 渲染主趋势图
+function renderMainChart(chartData) {
+    const showTemp = document.getElementById('show-temp').checked;
+    const showSalt = document.getElementById('show-salt').checked;
+    const showOxy = document.getElementById('show-oxy').checked;
+    const showPH = document.getElementById('show-ph').checked;
+    
+    const markers = getChartMarkers(chartData);
+
+    const series = [];
+    if (showTemp) {
+        series.push({
+            name: '水温',
+            type: 'line',
+            data: chartData.temperature,
+            smooth: true,
+            yAxisIndex: 0,
+            itemStyle: { color: '#3b82f6' },
+            areaStyle: { opacity: 0.1 }
+        });
+    }
+    if (showSalt) {
+        series.push({
+            name: '盐度',
+            type: 'line',
+            data: chartData.salinity,
+            smooth: true,
+            yAxisIndex: 1,
+            itemStyle: { color: '#8b5cf6' },
+            areaStyle: { opacity: 0.1 }
+        });
+    }
+    if (showOxy) {
+        series.push({
+            name: '溶解氧',
+            type: 'line',
+            data: chartData.oxygen,
+            smooth: true,
+            yAxisIndex: 2,
+            itemStyle: { color: '#10b981' },
+            areaStyle: { opacity: 0.1 }
+        });
+    }
+    if (showPH) {
+        series.push({
+            name: 'pH值',
+            type: 'line',
+            data: chartData.ph,
+            smooth: true,
+            yAxisIndex: 0,
+            itemStyle: { color: '#f59e0b' },
+            areaStyle: { opacity: 0.1 }
+        });
+    }
+
+    mainChart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            borderColor: '#e2e8f0',
+            textStyle: { color: '#334155' }
+        },
+        legend: {
+            data: ['水温', '盐度', '溶解氧', 'pH值'],
+            bottom: 0
+        },
+        grid: { left: 50, right: 50, top: 40, bottom: 40 },
+        xAxis: {
+            type: 'category',
+            data: chartData.dates,
+            axisLabel: { 
+                fontSize: 11,
+                formatter: function(value) {
+                    // 将 "2026-07-30T16:12" 转为 "07-30 16:12"
+                    if (value && value.includes('T')) {
+                        const parts = value.split('T');
+                        const datePart = parts[0].substring(5); // "07-30"
+                        const timePart = parts[1]; // "16:12"
+                        return datePart + ' ' + timePart;
+                    }
+                    return value;
+                }
+            }
+        },
+        yAxis: [
+            {
+                type: 'value',
+                name: '水温(℃) / pH',
+                position: 'left',
+                axisLabel: { fontSize: 11 }
+            },
+            {
+                type: 'value',
+                name: '盐度(‰)',
+                position: 'right',
+                axisLabel: { fontSize: 11 }
+            },
+            {
+                type: 'value',
+                name: '溶氧(mg/L)',
+                position: 'right',
+                offset: 40,
+                axisLabel: { fontSize: 11 }
+            }
+        ],
+        series: series.map(s => ({
+            ...s,
+            markLine: {
+                silent: false,
+                symbol: 'none',
+                data: markers.markLines,
+                lineStyle: { width: 2 },
+                label: { fontSize: 11 }
+            }
+        })),
+        dataZoom: [
+            { type: 'inside', start: 0, end: 100 },
+            { type: 'slider', start: 0, end: 100, height: 15, bottom: 10 }
+        ]
+    });
+}
+
+// 渲染单指标图表
+function renderSingleChart(chart, data, color, name, unit, min, max, chartData) {
+    const markers = chartData ? getChartMarkers(chartData) : { markLines: [] };
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: 40, right: 20, top: 25, bottom: 30 },
+        xAxis: {
+            type: 'category',
+            data: chartData.dates,
+            axisLabel: { 
+                fontSize: 10, 
+                rotate: 45,
+                formatter: function(value) {
+                    if (value && value.includes('T')) {
+                        const parts = value.split('T');
+                        return parts[0].substring(5) + ' ' + parts[1];
+                    }
+                    return value;
+                }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            name: unit,
+            min: min,
+            max: max,
+            axisLabel: { fontSize: 10 }
+        },
+        series: [{
+            name: name,
+            type: 'line',
+            data: data,
+            smooth: true,
+            itemStyle: { color: color },
+            areaStyle: {
+                color: {
+                    type: 'linear',
+                    x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [
+                        { offset: 0, color: color + '40' },
+                        { offset: 1, color: color + '05' }
+                    ]
+                }
+            },
+            markLine: {
+                silent: false,
+                symbol: 'none',
+                data: markers.markLines,
+                lineStyle: { width: 1.5 },
+                label: { fontSize: 10 }
+            }
+        }],
+        dataZoom: [{ type: 'inside', start: 0, end: 100 }]
+    });
+}
+
+// 渲染所有图表
+function renderCharts(chartData) {
+    renderMainChart(chartData);
+    renderSingleChart(tempChart, chartData.temperature, '#3b82f6', '水温', '℃', 0, 30, chartData);
+    renderSingleChart(oxyChart, chartData.oxygen, '#10b981', '溶解氧', 'mg/L', 0, 12, chartData);
+    renderSingleChart(saltChart, chartData.salinity, '#8b5cf6', '盐度', '‰', 15, 40, chartData);
+    renderSingleChart(phChart, chartData.ph, '#f59e0b', 'pH值', '', 6, 9, chartData);
+}
+
+// 更新主图（切换显示项）
+function updateChart() {
+    if (currentData) {
+        renderMainChart(currentData.chart_data);
+    }
+}
+
+// 切换时间范围
+function changeDays(days, btn) {
+    currentDays = days;
+    // 更新按钮状态
+    document.querySelectorAll('.days-btn').forEach(b => {
+        b.classList.remove('bg-blue-50', 'text-blue-600');
+        b.classList.add('border-slate-200');
+    });
+    if (btn) {
+        btn.classList.add('bg-blue-50', 'text-blue-600');
+    }
+    loadData(days);
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    loadData(currentDays);
+});
+</script>
+{% endblock %}

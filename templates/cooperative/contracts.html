@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}企业对接 - 滩智溯{% endblock %}
+{% block page_title %}合作社企业对接管理{% endblock %}
+{% block page_desc %}统一对接预制菜厂、商超企业{% endblock %}
+
+{% block content %}
+<!-- 企业统计 -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">合作企业数</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ orders | map(attribute='enterprise_id') | unique | list | length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">进行中订单</p>
+        <p class="text-3xl font-bold text-blue-600 mt-1">{{ orders | selectattr('status', 'equalto', 'pending') | list | length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">已签约订单</p>
+        <p class="text-3xl font-bold text-green-600 mt-1">{{ orders | selectattr('status', 'equalto', 'confirmed') | list | length }}</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <p class="text-sm text-slate-500">完成订单</p>
+        <p class="text-3xl font-bold text-purple-600 mt-1">{{ orders | selectattr('status', 'equalto', 'completed') | list | length }}</p>
+    </div>
+</div>
+
+<!-- 订单列表 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b">
+        <h3 class="text-lg font-semibold text-slate-800">采购订单列表</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">订单信息</th>
+                    <th class="px-6 py-3">企业</th>
+                    <th class="px-6 py-3">产品</th>
+                    <th class="px-6 py-3">数量</th>
+                    <th class="px-6 py-3">金额</th>
+                    <th class="px-6 py-3">状态</th>
+                    <th class="px-6 py-3">时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-slate-500">#{{ order.id }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-800">
+                        {{ order.enterprise.real_name if order.enterprise else '未知企业' }}
+                    </td>
+                    <td class="px-6 py-4 text-slate-800">
+                        {{ order.post.product_name if order.post else '未知产品' }}
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">{{ order.quantity }} kg</td>
+                    <td class="px-6 py-4 text-blue-600 font-medium">¥{{ "{:,.2f}".format(order.agreed_price * order.quantity) }}</td>
+                    <td class="px-6 py-4">
+                        {% if order.status == 'pending' %}
+                            <span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">待确认</span>
+                        {% elif order.status == 'confirmed' %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">进行中</span>
+                        {% elif order.status == 'completed' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">已完成</span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">已取消</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+                
+                {% if not orders %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-slate-400">暂无采购订单</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 企业对接流程 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-handshake text-blue-500 mr-2"></i>企业对接流程</h3>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="text-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="text-blue-600 font-bold">1</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-700">合作社发布</h4>
+            <p class="text-xs text-slate-500 mt-1">统一发布产品信息</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="text-blue-600 font-bold">2</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-700">企业查看</h4>
+            <p class="text-xs text-slate-500 mt-1">浏览产品并报价</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="text-blue-600 font-bold">3</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-700">线上签约</h4>
+            <p class="text-xs text-slate-500 mt-1">确认价格和数量</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="text-blue-600 font-bold">4</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-700">溯源核验</h4>
+            <p class="text-xs text-slate-500 mt-1">批量核验产品溯源</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span class="text-blue-600 font-bold">5</span>
+            </div>
+            <h4 class="text-sm font-medium text-slate-700">完成交易</h4>
+            <p class="text-xs text-slate-500 mt-1">电子存档、诚信记录</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

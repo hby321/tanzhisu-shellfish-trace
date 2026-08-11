@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}统一溯源管理 - 滩智溯{% endblock %}
+{% block page_title %}合作社统一溯源管理{% endblock %}
+{% block page_desc %}社员产品统一上链，溯源信息集中管理{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">溯源记录总数</p>
+                <p class="text-4xl font-bold mt-2">{{ traces|length }}</p>
+                <p class="text-xs opacity-75 mt-2">已上链溯源批次</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-link text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">进行中</p>
+                <p class="text-4xl font-bold mt-2">{{ traces|selectattr('status', 'equalto', 'processing')|list|length }}</p>
+                <p class="text-xs opacity-75 mt-2">待完成溯源</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-spinner text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">已完成</p>
+                <p class="text-4xl font-bold mt-2">{{ traces|selectattr('status', 'equalto', 'completed')|list|length }}</p>
+                <p class="text-xs opacity-75 mt-2">全流程完成</p>
+            </div>
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-check-circle text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 溯源记录表格 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-800">
+            <i class="fas fa-th-list text-purple-500 mr-2"></i>社员溯源记录
+        </h3>
+        <div class="flex items-center gap-2">
+            <input type="text" id="search-input" oninput="filterTraces()" placeholder="搜索批次码/产品/农户"
+                   class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-purple-500">
+            <span class="text-sm text-slate-500">共 {{ traces|length }} 条</span>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">批次码</th>
+                    <th class="px-6 py-3">产品名称</th>
+                    <th class="px-6 py-3">品类</th>
+                    <th class="px-6 py-3">所属农户</th>
+                    <th class="px-6 py-3">状态</th>
+                    <th class="px-6 py-3">区块链哈希</th>
+                    <th class="px-6 py-3">创建时间</th>
+                    <th class="px-6 py-3">操作</th>
+                </tr>
+            </thead>
+            <tbody id="trace-tbody">
+                {% for trace in traces %}
+                <tr class="border-b hover:bg-slate-50"
+                    data-keyword="{{ trace.batch_code }} {{ trace.product_name }} {{ trace.product_category }} {{ trace.farmer.real_name if trace.farmer else '' }}">
+                    <td class="px-6 py-4">
+                        <code class="text-sm bg-slate-100 px-2 py-1 rounded text-slate-700">{{ trace.batch_code }}</code>
+                    </td>
+                    <td class="px-6 py-4 font-medium text-slate-800">{{ trace.product_name }}</td>
+                    <td class="px-6 py-4 text-slate-600">{{ trace.product_category }}</td>
+                    <td class="px-6 py-4 text-slate-600">{{ trace.farmer.real_name if trace.farmer else '-' }}</td>
+                    <td class="px-6 py-4">
+                        {% if trace.status == 'completed' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-1"></span>已完成
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1"></span>进行中
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <code class="text-xs text-slate-500 font-mono">{{ (trace.blockchain_hash or '-')[:16] }}{% if trace.blockchain_hash %}...{% endif %}</code>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">{{ trace.created_at.strftime('%Y-%m-%d %H:%M') if trace.created_at else '-' }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('traceability.trace_detail', trace_id=trace.id) }}" class="text-blue-500 hover:text-blue-700 text-sm">
+                            <i class="fas fa-eye"></i> 详情
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not traces %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        暂无溯源记录
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 底部操作 -->
+<div class="mt-6 flex justify-center">
+    <a href="{{ url_for('traceability.create_trace') }}" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition shadow-lg">
+        <i class="fas fa-qrcode mr-2"></i>批量生成溯源码
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterTraces() {
+        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#trace-tbody tr[data-keyword]');
+        rows.forEach(row => {
+            const text = (row.dataset.keyword || '').toLowerCase();
+            if (!keyword || text.includes(keyword)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

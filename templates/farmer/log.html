@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}电子养殖台账 - 滩智溯{% endblock %}
+{% block page_title %}标准化电子养殖台账{% endblock %}
+{% block page_desc %}一键录入，自动生成，合规存档{% endblock %}
+
+{% block content %}
+<!-- 添加台账表单 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">
+        <i class="fas fa-plus-circle text-blue-500 mr-2"></i>新增台账记录
+    </h3>
+    <form id="log-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">选择滩涂*</label>
+            <select name="flat_id" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                <option value="">请选择</option>
+                {% for flat in flats %}
+                <option value="{{ flat.id }}" {% if request.args.get('flat_id')|int == flat.id %}selected{% endif %}>{{ flat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">日期*</label>
+            <input type="date" name="log_date" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">工作类型*</label>
+            <select name="work_type" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                <option value="投喂">投喂</option>
+                <option value="消杀">消杀</option>
+                <option value="巡查">巡查</option>
+                <option value="捕捞">捕捞</option>
+                <option value="苗种投放">苗种投放</option>
+                <option value="水质检测">水质检测</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">操作人</label>
+            <input type="text" name="operator" value="{{ current_user.real_name }}" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="md:col-span-4">
+            <label class="block text-sm text-slate-600 mb-1">工作内容*</label>
+            <textarea name="content" rows="3" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" placeholder="详细描述当日养殖工作内容..."></textarea>
+        </div>
+        <div class="md:col-span-4">
+            <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                <i class="fas fa-save mr-2"></i>保存记录
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 台账列表 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-800">历史台账记录</h3>
+        <span class="text-sm text-slate-500">共 {{ logs|length }} 条记录</span>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">日期</th>
+                    <th class="px-6 py-3">滩涂</th>
+                    <th class="px-6 py-3">工作类型</th>
+                    <th class="px-6 py-3">内容</th>
+                    <th class="px-6 py-3">操作人</th>
+                    <th class="px-6 py-3">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-3 text-slate-600">{{ log.log_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="px-6 py-3 text-slate-800">{{ log.flat.name if log.flat else '未知' }}</td>
+                    <td class="px-6 py-3">
+                        {% if log.work_type == '投喂' %}
+                            <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">投喂</span>
+                        {% elif log.work_type == '消杀' %}
+                            <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">消杀</span>
+                        {% elif log.work_type == '巡查' %}
+                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">巡查</span>
+                        {% elif log.work_type == '捕捞' %}
+                            <span class="px-2 py-1 rounded-full bg-purple-100 text-purple-700 text-xs">捕捞</span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs">{{ log.work_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-3 text-slate-600 max-w-md truncate">{{ log.content }}</td>
+                    <td class="px-6 py-3 text-slate-600">{{ log.operator }}</td>
+                    <td class="px-6 py-3">
+                        <a href="{{ url_for('farmer.export_pdf', log_id=log.id) }}" class="text-blue-500 hover:text-blue-700 text-sm">
+                            <i class="fas fa-download"></i> 下载
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not logs %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-slate-400">暂无台账记录，请添加第一条记录</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 台账说明 -->
+<div class="bg-blue-50 rounded-xl p-6 mt-6">
+    <h4 class="font-medium text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>电子台账说明</h4>
+    <ul class="text-sm text-slate-600 space-y-1">
+        <li>• 本系统生成的电子台账可替代手写台账，直接提交渔业局</li>
+        <li>• 所有记录均有时间戳和操作人，具备法律效力</li>
+        <li>• 支持导出PDF格式，方便打印存档</li>
+        <li>• 数据实时同步至区块链，不可篡改</li>
+    </ul>
+</div>
+
+<!-- 成功弹窗 -->
+<div id="log-success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">台账保存成功！</h3>
+            <p class="text-sm text-slate-600 mb-4">记录已保存至电子台账系统</p>
+            <button onclick="document.getElementById('log-success-modal').classList.add('hidden')" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                确定
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const logUrl = "{{ url_for('farmer.daily_log') }}";
+    
+    document.getElementById('log-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type=submit]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>保存中...';
+        
+        fetch(logUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('log-success-modal').classList.remove('hidden');
+                this.reset();
+            } else {
+                alert('保存失败：' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('网络错误，请重试');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>保存记录';
+        });
+    });
+</script>
+{% endblock %}

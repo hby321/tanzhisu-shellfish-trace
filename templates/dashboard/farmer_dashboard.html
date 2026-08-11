@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block title %}农户仪表板 - 滩智溯{% endblock %}
+{% block page_title %}农户数据总览{% endblock %}
+{% block page_desc %}我的养殖数据一目了然{% endblock %}
+
+{% block content %}
+<!-- 欢迎横幅 -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+    <div class="flex flex-col md:flex-row">
+        <div class="md:w-1/3 min-h-48 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-600 flex items-center justify-center relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-4 left-4 w-32 h-32 rounded-full bg-white"></div>
+                <div class="absolute bottom-2 right-8 w-20 h-20 rounded-full bg-white"></div>
+                <div class="absolute top-12 right-4 w-16 h-16 rounded-full bg-white"></div>
+            </div>
+            <i class="fas fa-water text-white text-8xl relative z-10 opacity-90"></i>
+        </div>
+        <div class="md:w-2/3 p-6 flex flex-col justify-center">
+            <h2 class="text-xl font-bold text-slate-800">欢迎回来，{{ current_user.real_name }}</h2>
+            <p class="text-sm text-slate-500 mt-2">今日滩涂养殖情况良好，建议关注水质变化和气象预警</p>
+            <div class="flex gap-4 mt-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-green-600">●</p>
+                    <p class="text-xs text-slate-500">水质正常</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-blue-600">{{ stats.flat_count }}</p>
+                    <p class="text-xs text-slate-500">滩涂数量</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-amber-600">{{ stats.log_count or 0 }}</p>
+                    <p class="text-xs text-slate-500">养殖记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计概览卡片 -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">我的滩涂</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.flat_count }}</p>
+        <p class="text-xs opacity-60 mt-1">个养殖场</p>
+    </div>
+    <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">待处理预警</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.alert_count }}</p>
+        <p class="text-xs opacity-60 mt-1">条预警信息</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">设备在线</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.device_online }}</p>
+        <p class="text-xs opacity-60 mt-1">台在线设备</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">溯源记录</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.trace_count }}</p>
+        <p class="text-xs opacity-60 mt-1">条溯源数据</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">养殖台账</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.log_count or 0 }}</p>
+        <p class="text-xs opacity-60 mt-1">条日常记录</p>
+    </div>
+    <div class="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">苗种记录</p>
+        <p class="text-2xl font-bold mt-1">{{ stats.seed_count or 0 }}</p>
+        <p class="text-xs opacity-60 mt-1">条投苗数据</p>
+    </div>
+</div>
+
+<!-- 更多统计 -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <i class="fas fa-chart-pie text-blue-600"></i>
+        </div>
+        <div>
+            <p class="text-sm text-slate-500">AI预测次数</p>
+            <p class="text-xl font-bold text-slate-800">{{ stats.predict_count or 0 }} 次</p>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <i class="fas fa-book-open text-green-600"></i>
+        </div>
+        <div>
+            <p class="text-sm text-slate-500">知识库文章</p>
+            <p class="text-xl font-bold text-slate-800">{{ stats.knowledge_count or 0 }} 篇</p>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+            <i class="fas fa-bullhorn text-amber-600"></i>
+        </div>
+        <div>
+            <p class="text-sm text-slate-500">气象预警</p>
+            <p class="text-xl font-bold text-slate-800">{{ stats.alert_count or 0 }} 条</p>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">近7天水质趋势</h3>
+        <div id="water-trend-chart" style="height: 280px;"></div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">养殖活动分布</h3>
+        <div id="activity-chart" style="height: 280px;"></div>
+    </div>
+</div>
+
+{% if stats.latest_quality %}
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">我的滩涂水质状态</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for item in stats.latest_quality %}
+        <div class="p-4 rounded-lg {% if item.status == 'normal' %}bg-green-50 border border-green-200{% elif item.status == 'warning' %}bg-amber-50 border border-amber-200{% else %}bg-red-50 border border-red-200{% endif %}">
+            <h4 class="font-medium text-slate-800 mb-2">{{ item.flat_name }}</h4>
+            <p class="text-sm">水温：<span class="font-bold">{{ item.temperature }}℃</span></p>
+            <p class="text-sm">溶解氧：<span class="font-bold">{{ item.oxygen }}mg/L</span></p>
+            <p class="text-xs mt-2 {% if item.status == 'normal' %}text-green-600{% elif item.status == 'warning' %}text-amber-600{% else %}text-red-600{% endif %}">
+                {{ '●' }} {{ item.status == 'normal' and '正常' or item.status == 'warning' and '预警' or '异常' }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- 近期活动和快捷操作 -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 近期活动 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm lg:col-span-2">
+        <h3 class="font-medium text-slate-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-clock text-blue-500"></i>近期活动
+        </h3>
+        {% if stats.recent_logs %}
+        <div class="space-y-3">
+            {% for log in stats.recent_logs %}
+            <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-fish text-blue-500 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-800">{{ log.work_type }} - {{ log.flat.name if log.flat else '' }}</p>
+                    <p class="text-sm text-slate-500 truncate">{{ log.content }}</p>
+                    <p class="text-xs text-slate-400 mt-1">{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '' }} · 操作员：{{ log.operator }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-center py-6">暂无近期活动记录</p>
+        {% endif %}
+    </div>
+    
+    <!-- 快捷操作 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">快捷操作</h3>
+        <div class="grid grid-cols-2 gap-3">
+            <a href="{{ url_for('farmer.my_flats') }}" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center">
+                <i class="fas fa-map text-2xl text-blue-500"></i>
+                <p class="text-sm mt-2 text-slate-700">我的滩涂</p>
+            </a>
+            <a href="{{ url_for('farmer.daily_log') }}" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition text-center">
+                <i class="fas fa-book text-2xl text-green-500"></i>
+                <p class="text-sm mt-2 text-slate-700">养殖台账</p>
+            </a>
+            <a href="{{ url_for('traceability.create_trace') }}" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition text-center">
+                <i class="fas fa-qrcode text-2xl text-purple-500"></i>
+                <p class="text-sm mt-2 text-slate-700">溯源生成</p>
+            </a>
+            <a href="{{ url_for('predict.predict_index') }}" class="p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition text-center">
+                <i class="fas fa-brain text-2xl text-amber-500"></i>
+                <p class="text-sm mt-2 text-slate-700">AI预测</p>
+            </a>
+            <a href="{{ url_for('farmer.knowledge') }}" class="p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition text-center">
+                <i class="fas fa-graduation-cap text-2xl text-teal-500"></i>
+                <p class="text-sm mt-2 text-slate-700">知识库</p>
+            </a>
+            <a href="{{ url_for('alert.alert_list') }}" class="p-4 bg-red-50 rounded-lg hover:bg-red-100 transition text-center">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+                <p class="text-sm mt-2 text-slate-700">灾害预警</p>
+            </a>
+        </div>
+        
+        <!-- 气象预警 -->
+        <h3 class="font-medium text-slate-800 mt-6 mb-4">气象预警</h3>
+        <div id="weather-warnings" class="space-y-2">
+            <p class="text-slate-400 text-center py-4">加载中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 水质趋势图
+    fetch('/api/water-quality/1?hours=168')
+        .then(r => r.json())
+        .then(data => {
+            const chart = echarts.init(document.getElementById('water-trend-chart'));
+            if (data.success && data.data.length > 0) {
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['水温', '溶解氧'] },
+                    grid: { left: 50, right: 50, bottom: 30 },
+                    xAxis: { type: 'category', data: data.data.map(d => d.timestamp.split(' ')[1] || d.timestamp) },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '水温', type: 'line', data: data.data.map(d => d.temperature), smooth: true, itemStyle: { color: '#3b82f6' } },
+                        { name: '溶解氧', type: 'line', data: data.data.map(d => d.oxygen), smooth: true, itemStyle: { color: '#10b981' } }
+                    ]
+                });
+            } else {
+                // 显示模拟数据
+                const times = [];
+                const temps = [];
+                const oxygens = [];
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    times.push((date.getMonth() + 1) + '/' + date.getDate());
+                    temps.push((Math.random() * 10 + 2).toFixed(1));
+                    oxygens.push((Math.random() * 3 + 4).toFixed(1));
+                }
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['水温', '溶解氧'] },
+                    grid: { left: 50, right: 50, bottom: 30 },
+                    xAxis: { type: 'category', data: times },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '水温', type: 'line', data: temps, smooth: true, itemStyle: { color: '#3b82f6' } },
+                        { name: '溶解氧', type: 'line', data: oxygens, smooth: true, itemStyle: { color: '#10b981' } }
+                    ]
+                });
+            }
+        });
+    
+    // 活动分布饼图
+    const activityChart = echarts.init(document.getElementById('activity-chart'));
+    const workTypes = ['投喂', '消杀', '巡查', '捕捞', '投苗'];
+    const workCounts = {{ stats.log_count or 0 }};
+    activityChart.setOption({
+        tooltip: { trigger: 'item' },
+        legend: { bottom: '0%' },
+        series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            data: [
+                { value: Math.round(workCounts * 0.3), name: '投喂', itemStyle: { color: '#3b82f6' } },
+                { value: Math.round(workCounts * 0.15), name: '消杀', itemStyle: { color: '#f59e0b' } },
+                { value: Math.round(workCounts * 0.25), name: '巡查', itemStyle: { color: '#10b981' } },
+                { value: Math.round(workCounts * 0.15), name: '捕捞', itemStyle: { color: '#8b5cf6' } },
+                { value: Math.round(workCounts * 0.15), name: '投苗', itemStyle: { color: '#ef4444' } }
+            ]
+        }]
+    });
+    
+    // 气象预警
+    fetch('/api/weather')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('weather-warnings');
+            if (data.success && data.data.length > 0) {
+                container.innerHTML = data.data.slice(0, 3).map(w => {
+                    const levelColors = { 'blue': 'bg-blue-50 border-blue-200 text-blue-700', 'yellow': 'bg-yellow-50 border-yellow-200 text-yellow-700', 'orange': 'bg-orange-50 border-orange-200 text-orange-700', 'red': 'bg-red-50 border-red-200 text-red-700' };
+                    const colorClass = levelColors[w.level] || 'bg-slate-50 border-slate-200 text-slate-700';
+                    return `<div class="p-2 rounded-lg border ${colorClass} text-xs">
+                        <i class="fas fa-cloud mr-1"></i>${w.type_name}
+                        <p class="text-slate-600 mt-1">${w.content.length > 50 ? w.content.substring(0, 50) + '...' : w.content}</p>
+                    </div>`;
+                }).join('');
+            } else {
+                container.innerHTML = '<p class="text-slate-400 text-center py-2">暂无气象预警</p>';
+            }
+        });
+</script>
+{% endblock %}

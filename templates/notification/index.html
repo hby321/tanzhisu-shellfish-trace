@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}消息通知 - 滩智溯{% endblock %}
+{% block page_title %}消息通知中心{% endblock %}
+{% block page_desc %}实时获取灾害预警、溯源通知、产销动态{% endblock %}
+
+{% block content %}
+<!-- 顶部统计卡片 -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">未读消息</p>
+        <p class="text-2xl font-bold mt-1">{{ unread_count }}</p>
+        <p class="text-xs opacity-60 mt-1">条待处理</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">灾害预警</p>
+        <p class="text-2xl font-bold mt-1">{{ type_stats.get('灾害预警', 0) }}</p>
+        <p class="text-xs opacity-60 mt-1">条预警信息</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">溯源通知</p>
+        <p class="text-2xl font-bold mt-1">{{ type_stats.get('溯源通知', 0) }}</p>
+        <p class="text-xs opacity-60 mt-1">条上链记录</p>
+    </div>
+    <div class="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">全部消息</p>
+        <p class="text-2xl font-bold mt-1">{{ notifications|length }}</p>
+        <p class="text-xs opacity-60 mt-1">条历史消息</p>
+    </div>
+</div>
+
+<!-- 操作栏 -->
+<div class="bg-white rounded-xl p-4 shadow-sm mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+        <a href="{{ url_for('notification.list_all') }}" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition">
+            <i class="fas fa-list mr-1"></i>全部消息
+        </a>
+        <form method="POST" action="{{ url_for('notification.mark_all_read') }}" style="display:inline;">
+            <button type="submit" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition">
+                <i class="fas fa-check-double mr-1"></i>全部标记已读
+            </button>
+        </form>
+    </div>
+    <div class="text-sm text-slate-500">
+        共 {{ notifications|length }} 条消息，{{ unread_count }} 条未读
+    </div>
+</div>
+
+<!-- 消息列表 -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    {% if notifications %}
+    <div class="divide-y divide-slate-100">
+        {% for notification in notifications %}
+        <div class="p-4 flex items-start gap-4 hover:bg-slate-50 transition {% if not notification.is_read %}bg-blue-50/30{% endif %}">
+            <!-- 图标 -->
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 
+                {% if notification.level == 'danger' %}bg-red-100 text-red-600
+                {% elif notification.level == 'warning' %}bg-yellow-100 text-yellow-600
+                {% elif notification.level == 'success' %}bg-green-100 text-green-600
+                {% else %}bg-blue-100 text-blue-600{% endif %}">
+                {% if notification.notify_type == 'alert' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% elif notification.notify_type == 'trace' %}
+                    <i class="fas fa-qrcode"></i>
+                {% elif notification.notify_type == 'trade' %}
+                    <i class="fas fa-store"></i>
+                {% elif notification.notify_type == 'enterprise' %}
+                    <i class="fas fa-building"></i>
+                {% elif notification.notify_type == 'regulator' %}
+                    <i class="fas fa-gavel"></i>
+                {% else %}
+                    <i class="fas fa-bell"></i>
+                {% endif %}
+            </div>
+            
+            <!-- 内容 -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <h4 class="text-sm font-medium text-slate-800">{{ notification.title }}</h4>
+                    {% if not notification.is_read %}
+                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                    {% endif %}
+                    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">{{ notification.type_name }}</span>
+                </div>
+                <p class="text-sm text-slate-600 line-clamp-2">{{ notification.content }}</p>
+                <div class="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                    <span><i class="far fa-clock mr-1"></i>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</span>
+                </div>
+            </div>
+            
+            <!-- 操作 -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                {% if not notification.is_read %}
+                <form method="POST" action="{{ url_for('notification.mark_as_read', id=notification.id) }}">
+                    <button type="submit" class="text-blue-500 hover:text-blue-700 text-sm" title="标记已读">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('notification.delete', id=notification.id) }}" onsubmit="return confirm('确定删除此消息？')">
+                    <button type="submit" class="text-slate-400 hover:text-red-500 text-sm" title="删除">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <i class="fas fa-inbox text-6xl text-slate-300 mb-4"></i>
+        <p class="text-slate-500">暂无消息通知</p>
+        <p class="text-sm text-slate-400 mt-2">当有灾害预警、溯源通知或产销动态时，将在此显示</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 实时获取未读消息数量
+function updateUnreadCount() {
+    fetch('/notification/unread-count')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge');
+            if (data.count > 0) {
+                if (badge) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'inline-block';
+                }
+            }
+        });
+}
+setInterval(updateUnreadCount, 30000);
+</script>
+{% endblock %}

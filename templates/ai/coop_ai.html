@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}AI集群研判 - 滩智溯{% endblock %}
+{% block page_title %}AI集群风险研判{% endblock %}
+{% block page_desc %}依托《数据智能体综合应用平台V1.0》软著 · 全域滩涂风险预判+周报生成{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-6 text-white mb-6 shadow-lg">
+    <div class="flex items-center gap-6">
+        <div class="flex-shrink-0 w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center"><i class="fas fa-robot text-white text-4xl"></i></div>
+        <div class="flex-1">
+            <h3 class="text-xl font-bold">集群风险研判 + AI周报智能体</h3>
+            <p class="text-sm opacity-90 mt-1">合作社全域滩涂水质空间聚类风险预判，自动生成养殖周报</p>
+            <div class="flex gap-4 mt-2 text-xs">
+                <span class="bg-white/20 px-2 py-1 rounded">国家版权局软著登记</span>
+                <span class="bg-white/20 px-2 py-1 rounded">监测滩涂 {{ flats|length }} 处</span>
+                <span class="bg-white/20 px-2 py-1 rounded">近7天预警 {{ alert_count }} 条</span>
+                <span id="agent-status-badge" class="px-2 py-1 rounded {% if agent_online %}bg-green-400/30{% else %}bg-red-400/30{% endif %}">
+                    <i class="fas {% if agent_online %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>平台{% if agent_online %}在线{% else %}离线{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- 集群风险研判 -->
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-triangle-exclamation text-orange-500 mr-2"></i>集群风险研判</h3>
+            <button onclick="clusterRisk()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium"><i class="fas fa-magnifying-glass mr-1"></i>研判海域风险</button>
+        </div>
+        <div id="cluster-result" class="p-4 text-sm text-slate-500">
+            <div class="text-center py-8 text-slate-400"><i class="fas fa-chart-area text-4xl mb-2 opacity-40"></i><p>点击"研判海域风险"启动集群风险研判智能体</p></div>
+        </div>
+    </div>
+
+    <!-- AI周报生成 -->
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-file-lines text-blue-500 mr-2"></i>AI养殖周报</h3>
+            <button onclick="genReport()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"><i class="fas fa-wand-magic-sparkles mr-1"></i>生成本周周报</button>
+        </div>
+        <div id="report-result" class="p-4 text-sm text-slate-500">
+            <div class="text-center py-8 text-slate-400"><i class="fas fa-file-circle-plus text-4xl mb-2 opacity-40"></i><p>点击"生成本周周报"由AI智能体自动汇总</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- 下辖滩涂水质一览 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-4 border-b"><h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-water text-cyan-500 mr-2"></i>下辖滩涂水质一览</h3></div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+                <tr>
+                    <th class="px-4 py-3 text-left">滩涂</th>
+                    <th class="px-4 py-3 text-left">水温(℃)</th>
+                    <th class="px-4 py-3 text-left">溶氧(mg/L)</th>
+                    <th class="px-4 py-3 text-left">盐度(‰)</th>
+                    <th class="px-4 py-3 text-left">pH</th>
+                    <th class="px-4 py-3 text-left">状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in flats %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-4 py-3 text-slate-800">{{ f.name }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.temperature if f.temperature else '-' }}</td>
+                    <td class="px-4 py-3 {% if f.oxygen and f.oxygen < 5 %}text-red-600 font-medium{% else %}text-slate-600{% endif %}">{{ f.oxygen if f.oxygen else '-' }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.salinity if f.salinity else '-' }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ f.ph if f.ph else '-' }}</td>
+                    <td class="px-4 py-3">
+                        {% if f.status == 'danger' %}<span class="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded">危险</span>
+                        {% elif f.status == 'warning' %}<span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded">预警</span>
+                        {% else %}<span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">正常</span>{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无下辖滩涂</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function clusterRisk() {
+    const box = document.getElementById('cluster-result');
+    box.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-orange-400 mb-2"></i><p class="text-sm text-slate-500">集群风险研判智能体推理中...</p></div>';
+    fetch('/ai/api/cluster-risk', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})
+    .then(r => r.json()).then(data => {
+        if (data.success) {
+            const r = data.ai_reply;
+            const colorMap = {'green':'green','blue':'blue','orange':'amber','red':'red'};
+            const c = colorMap[r['等级颜色']] || 'slate';
+            box.innerHTML = `
+                <div class="bg-${c}-50 border border-${c}-200 rounded-lg p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-lg font-bold text-${c}-600">${r['风险等级']}</span>
+                        <span class="text-xs text-slate-500">${data.meta.model||''}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white rounded p-2"><div class="text-xl font-bold text-slate-800">${r['监测滩涂数']}</div><div class="text-xs text-slate-500">监测滩涂</div></div>
+                        <div class="bg-white rounded p-2"><div class="text-xl font-bold text-red-600">${r['危险滩涂数']}</div><div class="text-xs text-slate-500">危险</div></div>
+                        <div class="bg-white rounded p-2"><div class="text-xl font-bold text-amber-600">${r['预警滩涂数']}</div><div class="text-xs text-slate-500">预警</div></div>
+                    </div>
+                    <div><span class="text-slate-500 font-medium">研判结论:</span><br><span class="text-slate-700">${r['研判结论']}</span></div>
+                    <div><span class="text-slate-500 font-medium">风险点位:</span> ${(r['风险点位']||[]).join('、')}</div>
+                    <div class="pt-2 border-t border-${c}-200"><span class="text-slate-500 font-medium">区域建议:</span><br><span class="text-slate-700">${r['区域建议']}</span></div>
+                </div>`;
+        } else { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ ' + (data.message||'研判失败') + '</div>'; }
+    }).catch(() => { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ 网络异常</div>'; });
+}
+
+function genReport() {
+    const box = document.getElementById('report-result');
+    box.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-blue-400 mb-2"></i><p class="text-sm text-slate-500">AI周报智能体生成中...</p></div>';
+    fetch('/ai/api/weekly-report', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'})
+    .then(r => r.json()).then(data => {
+        if (data.success) {
+            const r = data.ai_reply;
+            box.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-blue-200 pb-2">
+                        <span class="font-bold text-blue-700">📅 ${r['周报周期']}</span>
+                        <span class="text-xs text-slate-400">${r['生成时间']}</span>
+                    </div>
+                    <div><span class="text-slate-500 font-medium">核心摘要:</span><br><span class="text-slate-700">${r['核心摘要']}</span></div>
+                    <div><span class="text-slate-500 font-medium">水质周评:</span><br><span class="text-slate-700">${r['水质周评']}</span></div>
+                    <div><span class="text-slate-500 font-medium">预警回顾:</span><ul class="list-disc list-inside text-slate-700">${(r['预警回顾']||[]).map(a=>`<li>${a}</li>`).join('')}</ul></div>
+                    <div><span class="text-slate-500 font-medium">产销回顾:</span><br><span class="text-slate-700">${r['产销回顾']}</span></div>
+                    <div><span class="text-slate-500 font-medium">下周建议:</span><ul class="list-disc list-inside text-slate-700">${(r['下周建议']||[]).map(a=>`<li>${a}</li>`).join('')}</ul></div>
+                    <div class="text-xs text-slate-400 text-right border-t border-blue-200 pt-2">${r['署名']}</div>
+                </div>`;
+        } else { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ ' + (data.message||'生成失败') + '</div>'; }
+    }).catch(() => { box.innerHTML = '<div class="text-red-600 text-center py-4">⚠️ 网络异常</div>'; });
+}
+</script>
+{% endblock %}

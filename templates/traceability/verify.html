@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溯源信息 - {{ trace.product_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); min-height: 100vh; }
+        .qr-placeholder {
+            width: 200px; height: 200px; background: white; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- 二维码展示 -->
+        <div class="text-center mb-6">
+            <div class="qr-placeholder mx-auto mb-4">
+                <div class="text-center text-slate-400">
+                    <i class="fas fa-qrcode text-6xl"></i>
+                    <p class="mt-2 text-sm">扫码查看</p>
+                </div>
+            </div>
+            <h1 class="text-xl font-bold text-white">{{ trace.product_name }}</h1>
+            <p class="text-slate-300 text-sm mt-1">{{ trace.batch_code }}</p>
+        </div>
+        
+        <!-- 溯源信息卡片 -->
+        <div class="bg-white rounded-xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">✓ 已完成溯源</span>
+                <span class="text-xs text-slate-400">{{ trace.updated_at.strftime('%Y-%m-%d') }}</span>
+            </div>
+            
+            <div class="space-y-4 text-sm">
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">产品名称</span>
+                    <span class="font-medium text-slate-800">{{ trace.product_name }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">产品品类</span>
+                    <span class="font-medium text-slate-800">{{ trace.product_category }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">生产者</span>
+                    <span class="font-medium text-slate-800">{{ trace.farmer.real_name if trace.farmer else '未知' }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">产地</span>
+                    <span class="font-medium text-slate-800">{{ trace.farmer.area if trace.farmer else '未知' }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">苗种来源</span>
+                    <span class="font-medium text-slate-800">{{ trace.seed_source or '未知' }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">投苗日期</span>
+                    <span class="font-medium text-slate-800">{{ trace.seed_date.strftime('%Y-%m-%d') if trace.seed_date else '未知' }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">捕捞日期</span>
+                    <span class="font-medium text-slate-800">{{ trace.harvest_date.strftime('%Y-%m-%d') if trace.harvest_date else '未知' }}</span>
+                </div>
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">质检结果</span>
+                    <span class="font-medium text-green-600">{{ trace.quality_check }}</span>
+                </div>
+                {% if trace.enterprise %}
+                <div class="flex justify-between pb-3 border-b">
+                    <span class="text-slate-500">加工企业</span>
+                    <span class="font-medium text-slate-800">{{ trace.enterprise.real_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 区块链验证 -->
+            <div class="mt-4 p-3 bg-slate-50 rounded-lg">
+                <p class="text-xs text-slate-500 mb-1"><i class="fas fa-shield-alt mr-1"></i>区块链存证</p>
+                <code class="text-xs text-slate-600 break-all">{{ trace.blockchain_hash[:32] }}...</code>
+            </div>
+        </div>
+        
+        <p class="text-center text-slate-400 text-xs mt-4">
+            本产品已通过区块链溯源认证，数据真实可查
+        </p>
+    </div>
+</body>
+</html>

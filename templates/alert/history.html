@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}预警历史档案 - 滩智溯{% endblock %}
+{% block page_title %}预警历史档案{% endblock %}
+{% block page_desc %}年度预警统计与受灾时长分析{% endblock %}
+
+{% block content %}
+<!-- 年度汇总卡片 -->
+{% set ns = namespace(total=0, red=0, orange=0, blue=0, hours=0) %}
+{% for m in months %}
+    {% set ns.total = ns.total + m.total %}
+    {% set ns.red = ns.red + m.red_count %}
+    {% set ns.orange = ns.orange + m.orange_count %}
+    {% set ns.blue = ns.blue + m.blue_count %}
+    {% set ns.hours = ns.hours + m.disaster_hours %}
+{% endfor %}
+
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">年度总预警</p>
+                <p class="text-3xl font-bold mt-1">{{ ns.total }}</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-bell text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">红色预警</p>
+        <p class="text-3xl font-bold mt-1">{{ ns.red }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">橙色预警</p>
+        <p class="text-3xl font-bold mt-1">{{ ns.orange }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-5 text-white">
+        <p class="text-sm opacity-80">蓝色预警</p>
+        <p class="text-3xl font-bold mt-1">{{ ns.blue }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-5 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm opacity-80">受灾时长</p>
+                <p class="text-3xl font-bold mt-1">{{ ns.hours }}</p>
+                <p class="text-xs opacity-75 mt-1">小时</p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <i class="fas fa-clock text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 月度统计表格 -->
+<div class="bg-white rounded-xl shadow-sm">
+    <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-800">
+            <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>近12个月预警统计
+        </h3>
+        <span class="text-sm text-slate-500">共 {{ months|length }} 个月数据</span>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-6 py-3">月份</th>
+                    <th class="px-6 py-3">总预警数</th>
+                    <th class="px-6 py-3">红色预警</th>
+                    <th class="px-6 py-3">橙色预警</th>
+                    <th class="px-6 py-3">蓝色预警</th>
+                    <th class="px-6 py-3">受灾时长(小时)</th>
+                    <th class="px-6 py-3">预警等级分布</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in months %}
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-6 py-4 font-medium text-slate-800">{{ m.month }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">{{ m.total }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if m.red_count > 0 %}
+                        <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">{{ m.red_count }}</span>
+                        {% else %}
+                        <span class="text-slate-300">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if m.orange_count > 0 %}
+                        <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">{{ m.orange_count }}</span>
+                        {% else %}
+                        <span class="text-slate-300">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if m.blue_count > 0 %}
+                        <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ m.blue_count }}</span>
+                        {% else %}
+                        <span class="text-slate-300">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-slate-600">
+                        {% if m.disaster_hours > 0 %}
+                        <span class="text-red-600 font-medium">{{ m.disaster_hours }}</span>
+                        {% else %}
+                        <span class="text-slate-300">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-1 w-40">
+                            {% set total = m.total if m.total > 0 else 1 %}
+                            {% if m.red_count > 0 %}
+                            <div class="h-2 bg-red-500 rounded-l" style="width: {{ (m.red_count / total * 100) }}%"></div>
+                            {% endif %}
+                            {% if m.orange_count > 0 %}
+                            <div class="h-2 bg-amber-500" style="width: {{ (m.orange_count / total * 100) }}%"></div>
+                            {% endif %}
+                            {% if m.blue_count > 0 %}
+                            <div class="h-2 bg-blue-500 rounded-r" style="width: {{ (m.blue_count / total * 100) }}%"></div>
+                            {% endif %}
+                            {% if m.total == 0 %}
+                            <div class="h-2 bg-slate-100 rounded w-full"></div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not months %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        暂无历史数据
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 图例说明 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mt-6">
+    <h4 class="font-medium text-slate-800 mb-3"><i class="fas fa-info-circle text-blue-500 mr-2"></i>预警级别说明</h4>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="flex items-start gap-2 p-3 bg-red-50 rounded-lg">
+            <span class="w-3 h-3 rounded-full bg-red-500 mt-1 flex-shrink-0"></span>
+            <div>
+                <p class="font-medium text-red-800">红色预警</p>
+                <p class="text-red-600 text-xs mt-1">紧急灾害，需立即处置，可能造成较大损失</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-2 p-3 bg-amber-50 rounded-lg">
+            <span class="w-3 h-3 rounded-full bg-amber-500 mt-1 flex-shrink-0"></span>
+            <div>
+                <p class="font-medium text-amber-800">橙色预警</p>
+                <p class="text-amber-600 text-xs mt-1">存在风险，需提前准备应对方案</p>
+            </div>
+        </div>
+        <div class="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
+            <span class="w-3 h-3 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
+            <div>
+                <p class="font-medium text-blue-800">蓝色预警</p>
+                <p class="text-blue-600 text-xs mt-1">轻微波动，需持续关注</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

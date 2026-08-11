@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}合作社仪表板 - 滩智溯{% endblock %}
+{% block page_title %}合作社管理总览{% endblock %}
+{% block page_desc %}统筹社员数据，对接企业客户{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">社员总数</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.member_count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">滩涂总数</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.flat_count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">待处理预警</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.unresolved_alerts }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+        <p class="text-sm opacity-80">溯源记录</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.trace_count }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">设备状态</h3>
+        <div class="flex items-center justify-around py-4">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-green-600">{{ stats.online_devices }}</p>
+                <p class="text-sm text-slate-500">在线</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-slate-400">{{ stats.total_devices - stats.online_devices }}</p>
+                <p class="text-sm text-slate-500">离线</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-slate-800">{{ stats.total_devices }}</p>
+                <p class="text-sm text-slate-500">总数</p>
+            </div>
+        </div>
+        <a href="{{ url_for('hardware.device_list') }}" class="block text-center py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100">查看详情</a>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">预警统计</h3>
+        <div class="text-center py-4">
+            <p class="text-4xl font-bold text-red-600">{{ stats.total_alerts }}</p>
+            <p class="text-sm text-slate-500">累计预警</p>
+            <p class="text-xs text-amber-600 mt-2">未处理：{{ stats.unresolved_alerts }}</p>
+        </div>
+        <a href="{{ url_for('alert.alert_list') }}" class="block text-center py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100">查看详情</a>
+    </div>
+    
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-medium text-slate-800 mb-4">快捷操作</h3>
+        <div class="space-y-2">
+            <a href="{{ url_for('cooperative.members') }}" class="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100 text-sm">
+                <i class="fas fa-users text-blue-500 mr-2"></i>社员管理
+            </a>
+            <a href="{{ url_for('cooperative.unified_trace') }}" class="block p-3 bg-purple-50 rounded-lg hover:bg-purple-100 text-sm">
+                <i class="fas fa-qrcode text-purple-500 mr-2"></i>统一溯源
+            </a>
+            <a href="{{ url_for('cooperative.enterprise_contracts') }}" class="block p-3 bg-green-50 rounded-lg hover:bg-green-100 text-sm">
+                <i class="fas fa-handshake text-green-500 mr-2"></i>企业对接
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}新建采购 - 滩智溯{% endblock %}
+{% block page_title %}新建采购订单{% endblock %}
+{% block page_desc %}从市场发布中选择产品进行采购{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% for post in posts %}
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-blue-100">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="font-semibold text-slate-800">{{ post.product_name }}</h3>
+            <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">{{ post.product_category }}</span>
+        </div>
+        
+        <div class="space-y-2 text-sm">
+            <p class="flex justify-between">
+                <span class="text-slate-500">产量：</span>
+                <span class="font-medium text-slate-800">{{ post.quantity }} kg</span>
+            </p>
+            <p class="flex justify-between">
+                <span class="text-slate-500">产地：</span>
+                <span class="font-medium text-slate-800">{{ post.farmer.area if post.farmer else '未知' }}</span>
+            </p>
+            <p class="flex justify-between">
+                <span class="text-slate-500">农户：</span>
+                <span class="font-medium text-slate-800">{{ post.farmer.real_name if post.farmer else '未知' }}</span>
+            </p>
+            {% if post.listing_date %}
+            <p class="flex justify-between">
+                <span class="text-slate-500">上市：</span>
+                <span class="font-medium text-slate-800">{{ post.listing_date.strftime('%Y-%m-%d') }}</span>
+            </p>
+            {% endif %}
+        </div>
+        
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p class="text-sm text-slate-600">预期售价</p>
+            <p class="text-2xl font-bold text-blue-600">¥{{ post.expected_price or '面议' }}/kg</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('enterprise.new_purchase') }}" class="mt-4 space-y-2">
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            <div>
+                <label class="text-sm text-slate-600">采购单价</label>
+                <input type="number" name="agreed_price" value="{{ post.expected_price }}" step="0.5" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="text-sm text-slate-600">采购数量 (kg)</label>
+                <input type="number" name="quantity" min="1" max="{{ post.quantity }}" value="{{ post.quantity }}" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                <i class="fas fa-cart-plus mr-1"></i>创建订单
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+    
+    {% if not posts %}
+    <div class="col-span-3 bg-white rounded-xl p-12 text-center shadow-sm">
+        <i class="fas fa-store text-6xl text-slate-300 mb-4"></i>
+        <p class="text-slate-500">当前市场暂无供应商发布信息</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}AI养殖顾问 - 滩智溯{% endblock %}
+{% block page_title %}AI养殖顾问{% endblock %}
+{% block page_desc %}依托《数据智能体综合应用平台V1.0》软著 · 智能问答+水质风险研判{% endblock %}
+
+{% block content %}
+<!-- 软著平台横幅 -->
+<div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-6 text-white mb-6 shadow-lg">
+    <div class="flex items-center gap-6">
+        <div class="flex-shrink-0 w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-robot text-white text-4xl"></i>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-xl font-bold">AI养殖顾问智能体</h3>
+            <p class="text-sm opacity-90 mt-1">基于养殖知识图谱，支持水温/溶氧/盐度/病害/投喂/轮休等智能问答</p>
+            <div class="flex gap-4 mt-2 text-xs">
+                <span class="bg-white/20 px-2 py-1 rounded">国家版权局软著登记</span>
+                <span class="bg-white/20 px-2 py-1 rounded">知识图谱V1.0</span>
+                <span id="agent-status-badge" class="px-2 py-1 rounded {% if agent_online %}bg-green-400/30{% else %}bg-red-400/30{% endif %}">
+                    <i class="fas {% if agent_online %}fa-circle-check{% else %}fa-circle-xmark{% endif %} mr-1"></i>
+                    智能体平台{% if agent_online %}在线{% else %}离线{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 左侧：问答区 -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- 问答对话区 -->
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="p-4 border-b flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-comments text-purple-500 mr-2"></i>智能问答</h3>
+                <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-red-500"><i class="fas fa-trash mr-1"></i>清空</button>
+            </div>
+            <div id="chat-box" class="p-4 h-96 overflow-y-auto space-y-3 bg-slate-50">
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-purple-500 text-sm"></i></div>
+                    <div class="bg-white p-3 rounded-lg shadow-sm max-w-md text-sm text-slate-700">
+                        您好，我是<strong>AI养殖顾问智能体</strong>（数据智能体综合应用平台V1.0）。可咨询水温、溶氧、盐度、病害、投喂、轮休、收获、极端天气等问题。
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t flex gap-2">
+                <select id="flat-select" class="text-sm border rounded-lg px-2 py-2 text-slate-600">
+                    <option value="">不关联滩涂</option>
+                    {% for f in flats %}
+                    <option value="{{ f.id }}">{{ f.name }}</option>
+                    {% endfor %}
+                </select>
+                <input id="question-input" type="text" placeholder="输入养殖问题，如：水温过低怎么办？" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+                <button onclick="sendQuestion()" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-medium"><i class="fas fa-paper-plane mr-1"></i>发送</button>
+            </div>
+        </div>
+
+        <!-- 快捷问题 -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-bolt text-amber-500 mr-1"></i>快捷提问</h3>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="quickAsk('水温过低怎么办？')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100">水温过低怎么办？</button>
+                <button onclick="quickAsk('溶氧不足如何处理？')" class="text-xs bg-cyan-50 text-cyan-600 px-3 py-1.5 rounded-full hover:bg-cyan-100">溶氧不足如何处理？</button>
+                <button onclick="quickAsk('盐度异常如何处理？')" class="text-xs bg-teal-50 text-teal-600 px-3 py-1.5 rounded-full hover:bg-teal-100">盐度异常如何处理？</button>
+                <button onclick="quickAsk('如何科学投喂？')" class="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded-full hover:bg-green-100">如何科学投喂？</button>
+                <button onclick="quickAsk('发现病害怎么办？')" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-full hover:bg-red-100">发现病害怎么办？</button>
+                <button onclick="quickAsk('如何进行生态轮休？')" class="text-xs bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full hover:bg-emerald-100">如何进行生态轮休？</button>
+                <button onclick="quickAsk('什么时候可以收获上市？')" class="text-xs bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full hover:bg-amber-100">什么时候可以收获上市？</button>
+                <button onclick="quickAsk('台风暴雨怎么应对？')" class="text-xs bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full hover:bg-orange-100">台风暴雨怎么应对？</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：水质风险研判 -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm">
+            <div class="p-4 border-b">
+                <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-shield-heart text-red-500 mr-2"></i>水质风险研判</h3>
+                <p class="text-xs text-slate-500 mt-1">隐藏后台：水质越限自动生成处置建议</p>
+            </div>
+            <div class="p-4 space-y-3">
+                <select id="risk-flat-select" class="w-full text-sm border rounded-lg px-3 py-2">
+                    <option value="">选择滩涂</option>
+                    {% for f in flats %}
+                    <option value="{{ f.id }}">{{ f.name }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="analyzeRisk()" class="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium"><i class="fas fa-magnifying-glass mr-1"></i>智能研判风险</button>
+                <div id="risk-result" class="hidden text-sm"></div>
+            </div>
+        </div>
+
+        <!-- 我的滩涂水质概览 -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-3"><i class="fas fa-water text-blue-500 mr-1"></i>我的滩涂水质</h3>
+            <div class="space-y-2">
+                {% for f in flats %}
+                <div class="flex items-center justify-between text-sm p-2 rounded {% if f.status == 'danger' %}bg-red-50{% elif f.status == 'warning' %}bg-amber-50{% else %}bg-slate-50{% endif %}">
+                    <span class="text-slate-700">{{ f.name }}</span>
+                    <span class="text-xs {% if f.status == 'danger' %}text-red-600{% elif f.status == 'warning' %}text-amber-600{% else %}text-green-600{% endif %}">
+                        {% if f.oxygen %}DO {{ f.oxygen }}mg/L{% else %}无数据{% endif %}
+                    </span>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 text-center py-4">暂无滩涂</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendQuestion() {
+    const input = document.getElementById('question-input');
+    const q = input.value.trim();
+    if (!q) return;
+    appendMsg('user', q);
+    input.value = '';
+    const flatId = document.getElementById('flat-select').value;
+    const loadingId = appendMsg('bot', '<i class="fas fa-spinner fa-spin mr-1"></i>智能体推理中...');
+    fetch('/ai/api/advisor', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q, flat_id: flatId})
+    }).then(r => r.json()).then(data => {
+        document.getElementById(loadingId).remove();
+        if (data.success) {
+            appendMsg('bot', data.ai_reply['顾问回复'] || data.message);
+        } else {
+            appendMsg('bot', '⚠️ ' + (data.message || '推理失败'), true);
+        }
+    }).catch(() => {
+        document.getElementById(loadingId).remove();
+        appendMsg('bot', '⚠️ 网络异常', true);
+    });
+}
+
+function quickAsk(q) {
+    document.getElementById('question-input').value = q;
+    sendQuestion();
+}
+
+function appendMsg(role, html, isError) {
+    const box = document.getElementById('chat-box');
+    const id = 'msg-' + Date.now() + Math.random();
+    const div = document.createElement('div');
+    div.id = id;
+    div.className = 'flex gap-3 ' + (role === 'user' ? 'flex-row-reverse' : '');
+    div.innerHTML = `
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${role === 'user' ? 'bg-blue-100' : 'bg-purple-100'}">
+            <i class="fas ${role === 'user' ? 'fa-user text-blue-500' : 'fa-robot text-purple-500'} text-sm"></i>
+        </div>
+        <div class="${role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-slate-700'} ${isError ? 'bg-red-100 text-red-700' : ''} p-3 rounded-lg shadow-sm max-w-md text-sm whitespace-pre-wrap">${html}</div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return id;
+}
+
+function clearChat() {
+    const box = document.getElementById('chat-box');
+    box.innerHTML = `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-robot text-purple-500 text-sm"></i></div><div class="bg-white p-3 rounded-lg shadow-sm max-w-md text-sm text-slate-700">对话已清空，可继续提问。</div></div>`;
+}
+
+function analyzeRisk() {
+    const flatId = document.getElementById('risk-flat-select').value;
+    const box = document.getElementById('risk-result');
+    if (!flatId) { box.className = 'text-sm text-red-600'; box.innerHTML = '请先选择滩涂'; box.classList.remove('hidden'); return; }
+    box.className = 'text-sm text-slate-500'; box.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>水质风险研判智能体推理中...'; box.classList.remove('hidden');
+    fetch('/ai/api/water-risk', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({flat_id: parseInt(flatId)})
+    }).then(r => r.json()).then(data => {
+        if (data.success) {
+            const r = data.ai_reply;
+            const colorMap = {'green':'green','blue':'blue','orange':'amber','red':'red'};
+            const c = colorMap[r['等级颜色']] || 'slate';
+            box.innerHTML = `
+                <div class="bg-${c}-50 border border-${c}-200 rounded-lg p-3 space-y-2">
+                    <div class="flex justify-between"><span class="text-slate-500">滩涂</span><span class="font-medium">${r['滩涂']}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">风险等级</span><span class="font-bold text-${c}-600">${r['风险等级']}</span></div>
+                    <div><span class="text-slate-500">异常项:</span> ${(r['异常项']||[]).join('、')}</div>
+                    <div class="pt-2 border-t border-${c}-200"><span class="text-slate-500">处置方案:</span><br>${r['处置方案']}</div>
+                </div>`;
+        } else {
+            box.className = 'text-sm text-red-600'; box.innerHTML = '⚠️ ' + (data.message || '研判失败');
+        }
+    }).catch(() => { box.className = 'text-sm text-red-600'; box.innerHTML = '⚠️ 网络异常'; });
+}
+
+document.getElementById('question-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendQuestion(); });
+</script>
+{% endblock %}

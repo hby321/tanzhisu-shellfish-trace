@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}采购报表 - 滩智溯{% endblock %}
+{% block page_title %}采购数据分析报表{% endblock %}
+{% block page_desc %}月度采购、产地分布、溢价统计{% endblock %}
+
+{% block content %}
+<!-- 图表区域 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">月度采购趋势</h3>
+        <div id="monthly-chart" style="height: 300px;"></div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">产地分布</h3>
+        <div id="origin-chart" style="height: 300px;"></div>
+    </div>
+</div>
+
+<!-- 月度明细表 -->
+<div class="bg-white rounded-xl p-6 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">月度采购明细</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50">
+                <tr class="text-left text-sm text-slate-500">
+                    <th class="px-4 py-3">月份</th>
+                    <th class="px-4 py-3">订单数</th>
+                    <th class="px-4 py-3">采购金额</th>
+                    <th class="px-4 py-3">采购数量 (kg)</th>
+                    <th class="px-4 py-3">平均单价</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for month, data in monthly_data.items() %}
+                <tr class="border-b">
+                    <td class="px-4 py-3 text-slate-800 font-medium">{{ month }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ data.count }}</td>
+                    <td class="px-4 py-3 text-blue-600 font-medium">¥{{ "{:,.2f}".format(data.total_value) }}</td>
+                    <td class="px-4 py-3 text-slate-600">{{ data.total_qty }}</td>
+                    <td class="px-4 py-3 text-slate-600">¥{{ "{:.2f}".format(data.total_value / data.total_qty if data.total_qty > 0 else 0) }}</td>
+                </tr>
+                {% endfor %}
+                
+                {% if not monthly_data %}
+                <tr>
+                    <td colspan="5" class="px-4 py-12 text-center text-slate-400">暂无采购数据</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 准备数据
+    const months = {{ monthly_data.keys() | list | tojson }};
+    const orderCounts = {{ monthly_data.values() | map(attribute='count') | list | tojson }};
+    const totalValues = {{ monthly_data.values() | map(attribute='total_value') | list | tojson }};
+    const totalQty = {{ monthly_data.values() | map(attribute='total_qty') | list | tojson }};
+    const originData = {{ origin_distribution.items() | list | tojson }};
+    
+    // 月度图表
+    const monthlyChart = echarts.init(document.getElementById('monthly-chart'));
+    const monthlyOption = {
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['订单数', '采购金额', '采购数量'] },
+        grid: { left: 60, right: 60, bottom: 30 },
+        xAxis: { type: 'category', data: months.length ? months : ['暂无数据'] },
+        yAxis: [
+            { type: 'value', name: '订单数' },
+            { type: 'value', name: '金额/数量' }
+        ],
+        series: months.length ? [
+            { name: '订单数', type: 'bar', data: orderCounts, itemStyle: { color: '#3b82f6' } },
+            { name: '采购金额', type: 'line', yAxisIndex: 1, data: totalValues, itemStyle: { color: '#10b981' } },
+            { name: '采购数量', type: 'line', yAxisIndex: 1, data: totalQty, itemStyle: { color: '#f59e0b' } }
+        ] : []
+    };
+    monthlyChart.setOption(monthlyOption);
+    
+    // 产地分布图
+    const originChart = echarts.init(document.getElementById('origin-chart'));
+    const originOption = {
+        tooltip: { trigger: 'item' },
+        legend: { bottom: '0%' },
+        series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            data: originData.length ? originData.map(([name, value]) => ({ name, value: value || 0 })) : [{ name: '暂无数据', value: 1 }],
+            emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' } }
+        }]
+    };
+    originChart.setOption(originOption);
+    
+    window.addEventListener('resize', () => {
+        monthlyChart.resize();
+        originChart.resize();
+    });
+</script>
+{% endblock %}

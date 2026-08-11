@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% block title %}AI产量预测 - 滩智溯{% endblock %}
+{% block page_title %}AI寒地产量预测模型{% endblock %}
+{% block page_desc %}智能分析，科学养殖，提升效益{% endblock %}
+
+{% block content %}
+<!-- 预测页面横幅 -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl p-6 text-white mb-6 shadow-lg">
+    <div class="flex items-center gap-6">
+        <div class="flex-shrink-0 w-24 h-24 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <i class="fas fa-brain text-white text-5xl"></i>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-xl font-bold">AI寒地产量预测模型</h3>
+            <p class="text-sm opacity-90 mt-1">基于历史水质数据和环境参数，科学预测养殖产量</p>
+            <div class="flex gap-4 mt-3 text-sm">
+                <span><i class="fas fa-brain mr-1"></i>机器学习算法</span>
+                <span><i class="fas fa-water mr-1"></i>水质数据分析</span>
+                <span><i class="fas fa-chart-line mr-1"></i>产量趋势预测</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计概览 -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-4 text-white">
+        <p class="text-sm opacity-80">累计预测</p>
+        <p class="text-2xl font-bold">{{ predict_count }} 次</p>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white">
+        <p class="text-sm opacity-80">预测总产量</p>
+        <p class="text-2xl font-bold">{{ "%.0f"|format(total_yield) }} kg</p>
+    </div>
+    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 text-white">
+        <p class="text-sm opacity-80">平均环境评分</p>
+        <p class="text-2xl font-bold">{{ "%.1f"|format(avg_env) }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white">
+        <p class="text-sm opacity-80">平均存活率</p>
+        <p class="text-2xl font-bold">{{ "%.1f"|format(avg_survival) }}%</p>
+    </div>
+</div>
+
+<!-- 历史预测记录 -->
+{% if predictions %}
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-slate-800"><i class="fas fa-history text-blue-500 mr-2"></i>历史预测记录</h3>
+        <span class="text-sm text-slate-500">最近10条</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-slate-500 border-b">
+                    <th class="pb-2">预测时间</th>
+                    <th class="pb-2">滩涂</th>
+                    <th class="pb-2">投苗量</th>
+                    <th class="pb-2">预测产量</th>
+                    <th class="pb-2">存活率</th>
+                    <th class="pb-2">环境评分</th>
+                    <th class="pb-2">置信度</th>
+                    <th class="pb-2">建议数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in predictions %}
+                <tr class="border-b last:border-0 hover:bg-slate-50">
+                    <td class="py-2 text-slate-600">{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
+                    <td class="py-2 text-slate-800">{{ p.flat.name if p.flat else '-' }}</td>
+                    <td class="py-2 text-slate-600">{{ p.seed_quantity }} kg</td>
+                    <td class="py-2 font-semibold text-blue-600">{{ "%.0f"|format(p.predicted_yield) }} kg</td>
+                    <td class="py-2 text-green-600">{{ "%.1f"|format(p.survival_rate) }}%</td>
+                    <td class="py-2">
+                        {% if p.environmental_score >= 80 %}
+                        <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">{{ "%.1f"|format(p.environmental_score) }}</span>
+                        {% elif p.environmental_score >= 60 %}
+                        <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">{{ "%.1f"|format(p.environmental_score) }}</span>
+                        {% else %}
+                        <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">{{ "%.1f"|format(p.environmental_score) }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2 text-slate-600">{{ "%.1f"|format(p.confidence) }}%</td>
+                    <td class="py-2 text-slate-600">{{ p.suggestions_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- 选择滩涂 -->
+<div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">选择滩涂进行预测</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for item in flats %}
+        <div class="border border-slate-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition cursor-pointer"
+             onclick="selectFlat({{ item.flat.id }}, '{{ item.flat.name }}', {{ item.flat.area }})">
+            <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium text-slate-800">{{ item.flat.name }}</h4>
+                {% if item.has_active_seedling %}
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">养殖中</span>
+                {% else %}
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded">空闲</span>
+                {% endif %}
+            </div>
+            <p class="text-sm text-slate-500">面积：{{ item.flat.area }} 亩</p>
+            {% if item.seedlings %}
+            <p class="text-sm text-slate-500 mt-1">
+                当前苗种：{{ item.seedlings[0].species }} {{ item.seedlings[0].quantity }}kg
+            </p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 预测输入 -->
+<div id="prediction-form" class="bg-white rounded-xl p-6 shadow-sm mb-6 hidden">
+    <h3 class="text-lg font-semibold text-slate-800 mb-4">预测参数设置</h3>
+    <form id="predict-form" onsubmit="runPrediction(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <input type="hidden" id="flat-id">
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">滩涂</label>
+            <input type="text" id="flat-name" readonly class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">滩涂面积（亩）</label>
+            <input type="number" id="flat-area" readonly class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">苗种投放量（kg）*</label>
+            <input type="number" id="seed-quantity" required min="0" step="10" value="100" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+            <label class="block text-sm text-slate-600 mb-1">预测周期（天）*</label>
+            <select id="predict-days" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500">
+                <option value="30">30天</option>
+                <option value="60">60天</option>
+                <option value="90" selected>90天</option>
+                <option value="120">120天</option>
+                <option value="180">180天</option>
+            </select>
+        </div>
+        <div class="md:col-span-4">
+            <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition shadow-lg">
+                <i class="fas fa-brain mr-2"></i>运行AI预测
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 预测结果 -->
+<div id="prediction-result" class="hidden">
+    <!-- 结果概览 -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-6 text-white">
+            <p class="text-sm opacity-80">预测产量</p>
+            <p class="text-3xl font-bold mt-1"><span id="pred-yield">0</span> kg</p>
+            <p class="text-xs opacity-75 mt-2">基于AI模型预测</p>
+        </div>
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+            <p class="text-sm opacity-80">预测存活率</p>
+            <p class="text-3xl font-bold mt-1"><span id="pred-survival">0</span>%</p>
+            <p class="text-xs opacity-75 mt-2">寒地养殖参考值</p>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white">
+            <p class="text-sm opacity-80">环境适宜度</p>
+            <p class="text-3xl font-bold mt-1"><span id="pred-env">0</span> 分</p>
+            <p class="text-xs opacity-75 mt-2">0-100分，越高越好</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
+            <p class="text-sm opacity-80">模型置信度</p>
+            <p class="text-3xl font-bold mt-1"><span id="pred-confidence">0</span>%</p>
+            <p class="text-xs opacity-75 mt-2">预测结果可靠程度</p>
+        </div>
+    </div>
+    
+    <!-- 详细图表 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">产量增长曲线</h3>
+            <div id="yield-chart" style="height: 300px;"></div>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">环境指标评分</h3>
+            <div id="radar-chart" style="height: 300px;"></div>
+        </div>
+    </div>
+    
+    <!-- 优化建议 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">
+            <i class="fas fa-lightbulb text-amber-500 mr-2"></i>AI优化建议
+        </h3>
+        <div id="suggestions" class="space-y-3"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectFlat(id, name, area) {
+        document.getElementById('prediction-form').classList.remove('hidden');
+        document.getElementById('flat-id').value = id;
+        document.getElementById('flat-name').value = name;
+        document.getElementById('flat-area').value = area;
+        document.getElementById('prediction-result').classList.add('hidden');
+        document.getElementById('prediction-form').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function runPrediction(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('flat_id', document.getElementById('flat-id').value);
+        formData.append('seed_quantity', document.getElementById('seed-quantity').value);
+        formData.append('days', document.getElementById('predict-days').value);
+        
+        fetch('/predict/run', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showPredictionResult(data.prediction);
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+    
+    function showPredictionResult(pred) {
+        document.getElementById('prediction-result').classList.remove('hidden');
+        
+        document.getElementById('pred-yield').textContent = pred.predicted_yield.toLocaleString();
+        document.getElementById('pred-survival').textContent = pred.survival_rate;
+        document.getElementById('pred-env').textContent = pred.environmental_score;
+        document.getElementById('pred-confidence').textContent = pred.confidence;
+        
+        // 产量曲线
+        const yieldChart = echarts.init(document.getElementById('yield-chart'));
+        yieldChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: pred.yield_trend.map(t => '第' + t.day + '天') },
+            yAxis: { type: 'value', name: '产量(kg)' },
+            series: [{
+                data: pred.yield_trend.map(t => t.yield),
+                type: 'line',
+                smooth: true,
+                itemStyle: { color: '#3b82f6' },
+                areaStyle: { color: 'rgba(59, 130, 246, 0.2)' }
+            }]
+        });
+        
+        // 雷达图
+        const radarChart = echarts.init(document.getElementById('radar-chart'));
+        radarChart.setOption({
+            tooltip: {},
+            radar: {
+                indicator: [
+                    { name: '水温适宜度', max: 100 },
+                    { name: '盐度适宜度', max: 100 },
+                    { name: '溶解氧', max: 100 },
+                    { name: 'pH适宜度', max: 100 },
+                    { name: '存活率', max: 100 }
+                ]
+            },
+            series: [{
+                type: 'radar',
+                data: [{
+                    value: [pred.temp_score, pred.salinity_score, pred.oxygen_score, pred.ph_score, pred.survival_rate],
+                    name: '环境评分',
+                    itemStyle: { color: '#8b5cf6' }
+                }]
+            }]
+        });
+        
+        // 建议列表
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = '';
+        pred.suggestions.forEach(s => {
+            const colors = {
+                'success': 'green',
+                'info': 'blue',
+                'warning': 'amber',
+                'danger': 'red'
+            };
+            const icons = {
+                'success': 'fa-check-circle',
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle',
+                'danger': 'fa-times-circle'
+            };
+            const div = document.createElement('div');
+            div.className = `p-4 rounded-lg border border-${colors[s.level]}-200 bg-${colors[s.level]}-50`;
+            div.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas ${icons[s.level]} text-${colors[s.level]}-500"></i>
+                    <span class="font-medium text-${colors[s.level]}-700">${s.title}</span>
+                </div>
+                <p class="text-sm text-slate-600">${s.content}</p>
+            `;
+            suggestionsDiv.appendChild(div);
+        });
+        
+        document.getElementById('prediction-result').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

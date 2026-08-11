@@ -1,0 +1,27 @@
+// ============================================
+// 多端兼容性样式 (Compatibility)
+// ============================================
+
+// 1. 全局盒模型：统一为 border-box，避免多端 padding 计算差异
+page,
+view,
+scroll-view,
+swiper,
+swiper-item,
+text,
+image,
+button,
+input,
+textarea,
+form,
+label,
+navigator {
+  box-sizing: border-box;
+}
+
+// 2. Taro H5 页面 wrapper 占满视口，确保子页面 flex 布局正确
+.app-page {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
