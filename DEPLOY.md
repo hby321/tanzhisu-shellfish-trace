@@ -61,6 +61,7 @@ https://a1b2c3d4e5f6.ngrok-free.app
 - 不需要信用卡
 - 免费 HTTPS
 - 本地电脑需要保持运行
+- Python 启动器自动处理 cloudflared 下载和 URL 提取
 
 ### 步骤
 
@@ -68,43 +69,46 @@ https://a1b2c3d4e5f6.ngrok-free.app
 1. 访问 https://dash.cloudflare.com 注册账号（**免费，无需信用卡**）
 2. 登录后进入 **Zero Trust** 面板
 
-#### 2. 安装 cloudflared
-1. 下载 Windows 版：https://github.com/cloudflare/cloudflared/releases
-2. 下载 `cloudflared-windows-amd64.exe`，重命名为 `cloudflared.exe`
-3. 放到任意目录（如 `C:\cloudflared\`）
+#### 2. 自动安装 cloudflared
+首次运行启动器时会自动下载 cloudflared 到 `cloudflared/` 目录。
+如需手动下载：https://github.com/cloudflare/cloudflared/releases
 
-#### 3. 创建隧道
+#### 3. 两种使用模式
+
+##### 模式 A：临时 URL（最快，推荐先试）
+直接双击 **`_start_public.bat`**（或运行 `python start_public.py`）
+
+脚本会自动：
+- 启动 Flask 后端
+- 启动 cloudflared 隧道
+- 从日志中提取 trycloudflare.com 公网 URL
+- 在屏幕上显示访问地址
+
+**URL 每次重启会变化**，适合临时演示。
+
+##### 模式 B：固定 URL（需一次性配置）
+配置步骤：
+
 ```bash
-# 1. 登录 Cloudflare
+# 1. 登录 Cloudflare（浏览器会弹出授权页面）
 cloudflared tunnel login
 
-# 2. 创建隧道（名称自定义）
+# 2. 创建隧道
 cloudflared tunnel create tanzhisu
 
-# 3. 配置 DNS 域名
-# 在 Cloudflare Dashboard > Zero Trust > Tunnels > tanzhisu > Public Hostname
-# 设置子域名（如 tanzhisu），选择你的域名
-# 或使用 cloudflared 提供的 trycloudflare.com 临时域名
+# 3. 查看隧道 ID 和凭证文件路径
+cloudflared tunnel list-credentials
 
-# 4. 配置 Tunnel 指向本地 5000 端口
-# 创建配置文件 C:\cloudflared\config.yml
+# 4. 将配置模板复制并填写
+# 复制 cloudflared_config.yml.example 为 cloudflared_config.yml
+# 将 TUNNEL_ID_HERE 替换为实际隧道 ID
+# 将 credentials-file 路径替换为实际路径
 ```
 
-配置文件 `config.yml` 内容：
-```yaml
-tunnel: tanzhisu
-credentials-file: C:\Users\你的用户名\.cloudflared\<隧道ID>.json
+然后双击 **`_start_fixed_public.bat`**（或运行 `python start_public.py --fixed`）
 
-ingress:
-  - hostname: tanzhisu.trycloudflare.com
-    service: http://localhost:5000
-  - service: http_status:404
-```
-
-#### 4. 启动演示
-双击运行项目根目录的 **`_start_fixed_public.bat`**
-
-固定公网地址：`https://tanzhisu.trycloudflare.com`
+**注意**：固定 URL 需要一个已在 Cloudflare 托管的域名。
+如果没有域名，可使用模式 A（临时 URL）或注册免费域名。
 
 ---
 

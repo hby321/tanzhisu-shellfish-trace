@@ -1,0 +1,17 @@
+# Cloudflare Tunnel 配置文件
+# 使用方法：
+#   1. 在 Cloudflare Zero Trust 创建隧道：cloudflared tunnel create tanzhisu
+#   2. 将生成的 credentials-file 路径填入下方
+#   3. 配置 DNS 域名（在 Cloudflare Dashboard > DNS 设置）
+#   4. 启动：python start_public.py --fixed
+#
+# 获取 credentials-file 路径：
+#   cloudflared tunnel list-credentials
+
+tunnel: TUNNEL_ID_HERE
+credentials-file: /path/to/.cloudflared/TUNNEL_ID.json
+
+ingress:
+  - hostname: your-domain.com
+    service: http://localhost:5000
+  - service: http_status:404
