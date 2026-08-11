@@ -34,6 +34,7 @@ CLOUDFLARED_DIR = os.path.join(PROJECT_DIR, 'cloudflared')
 CLOUDFLARED_EXE = os.path.join(CLOUDFLARED_DIR, 'cloudflared.exe')
 CLOUDFLARED_LOG = os.path.join(PROJECT_DIR, 'cloudflared.log')
 CLOUDFLARED_URL_FILE = os.path.join(PROJECT_DIR, 'public_url.txt')
+STATE_FILE = os.path.join(PROJECT_DIR, 'tunnel_state.json')
 FLASK_PORT = 5000
 
 # cloudflared 下载地址（Windows AMD64）
@@ -205,27 +206,32 @@ def run_temporary_tunnel():
 
 
 def run_named_tunnel():
-    """命名隧道模式：固定 URL（需要预先在 Cloudflare 配置）"""
+    """命名隧道模式：固定 URL"""
     config_path = os.path.join(PROJECT_DIR, 'cloudflared_config.yml')
+    state_file = os.path.join(PROJECT_DIR, 'tunnel_state.json')
     
-    if not os.path.exists(config_path):
-        print_banner("命名隧道配置")
+    # 检查配置
+    state = None
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, 'r') as f:
+                state = json.load(f)
+        except Exception:
+            pass
+    
+    if not os.path.exists(config_path) or not state:
+        print_banner("Cloudflare 固定URL 未配置")
         print("""
-  首次使用命名隧道需要以下步骤：
+  请先运行配置向导：
 
-  1. 注册 Cloudflare 账号：https://dash.cloudflare.com
+    python setup_tunnel.py
+    或双击 _setup_tunnel.bat
 
-  2. 登录后在 Zero Trust > Tunnels 创建隧道：
-     cloudflared tunnel login
-     cloudflared tunnel create tanzhisu
-
-  3. 在 Cloudflare Dashboard 配置 DNS 域名
-     (需要一个域名，或使用 Cloudflare 提供的子域名)
-
-  4. 将生成的 config.yml 保存到：
-     """ + config_path + """
-
-  详细步骤请查看 DEPLOY.md 方案二章节
+  配置向导会自动：
+    1. 登录 Cloudflare
+    2. 创建命名隧道
+    3. 获取 trycloudflare.com 固定 URL
+    4. 生成配置文件
         """)
         return None
     
@@ -244,21 +250,15 @@ def run_named_tunnel():
     
     print(f"  cloudflared 进程 PID: {proc.pid}")
     
-    # 等待 URL
-    time.sleep(5)
+    # 读取固定 URL
+    fixed_url = state.get('fixed_url', '')
     
-    # 从配置读取域名
-    try:
-        with open(config_path, 'r') as f:
-            for line in f:
-                if 'hostname' in line:
-                    domain = line.split('hostname')[-1].strip()
-                    print(f"\n  固定公网地址：https://{domain}")
-                    print(f"    平台主页：https://{domain}/")
-                    print(f"    小程序H5：https://{domain}/m/")
-                    break
-    except Exception:
-        pass
+    print(f"\n{'='*60}")
+    print(f"  固定公网地址：{fixed_url}")
+    print(f"{'='*60}")
+    print(f"\n  演示链接：")
+    print(f"    平台主页：{fixed_url}/")
+    print(f"    小程序H5：{fixed_url}/m/")
     
     return proc
 
